@@ -81,7 +81,7 @@ const Feedback: React.FC = () => {
                   color: '#1890ff',
                   lineHeight: '32px'
                 }}>
-                  QQ群号：695425036（暗号：摸鱼）
+                  QQ群号：169924359（暗号：摸鱼）
                 </span>
                 <Button
                   type="primary"
@@ -134,7 +134,7 @@ const Feedback: React.FC = () => {
               <Title level={2} style={{ margin: 0 }}>网站功能介绍</Title>
             </div>
             <Paragraph style={{ marginBottom: 32 }}>
-              鱼岛是一个专注于提供优质阅读体验和丰富娱乐功能的平台，我们致力于为用户提供一站式的信息聚合和娱乐服务。
+              摸鱼岛是一个专注于提供优质阅读体验和丰富娱乐功能的平台，我们致力于为用户提供一站式的信息聚合和娱乐服务。
             </Paragraph>
 
             <div style={{ marginBottom: 32 }}>
