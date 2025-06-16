@@ -2,12 +2,12 @@
  * 本地后端地址
  */
 // export const BACKEND_HOST_LOCAL = 'http://localhost:8123';
-export const BACKEND_HOST_LOCAL = 'https://fish.caiya.tk';
+export const BACKEND_HOST_LOCAL = 'https://fish.caiya.tk/fish';
 
 /**
  * 线上后端地址
  */
-export const BACKEND_HOST_PROD = 'https://fish.caiya.tk';
+export const BACKEND_HOST_PROD = 'https://fish.caiya.tk/fish';
 
 /**
  * 验证码地址
