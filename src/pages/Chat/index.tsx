@@ -130,7 +130,7 @@ const ChatRoom: React.FC = () => {
   const loadingRef = useRef(false); // 添加loadingRef防止重复请求
 
   const [announcement, setAnnouncement] = useState<string>(
-    '欢迎来到摸鱼聊天室！🎉 这里是一个充满快乐的地方~。',
+    '欢迎来到摸鱼聊天室！🎉 这里是一个充满快乐的地方~。本站域名：<a href="https://fish.caiya.tk/" target="_blank" rel="noopener noreferrer">https://fish.caiya.tk/</a>'
   );
   const [showAnnouncement, setShowAnnouncement] = useState<boolean>(true);
 
