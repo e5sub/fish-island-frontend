@@ -2,19 +2,19 @@
  * 本地后端地址
  */
 // export const BACKEND_HOST_LOCAL = 'http://localhost:8123';
-export const BACKEND_HOST_LOCAL = 'http://127.0.0.1:8123';
+export const BACKEND_HOST_LOCAL = 'https://fish.caiya.tk';
 
 /**
  * 线上后端地址
  */
-export const BACKEND_HOST_PROD = 'http://127.0.0.1:8123';
+export const BACKEND_HOST_PROD = 'https://fish.caiya.tk';
 
 /**
  * 验证码地址
  */
 export const BACKEND_HOST_CODE = BACKEND_HOST_LOCAL + '/api';
-export const BACKEND_HOST_WS = 'wss://127.0.0.1:8123/ws/?token=';
-// export const BACKEND_HOST_WS = 'ws://127.0.0.1:8090?token=';
+export const BACKEND_HOST_WS = 'wss://fish.caiya.tk/ws/?token=';
+// export const BACKEND_HOST_WS = 'ws://fish.caiya.tk:8090?token=';
 
 
 export const SYSTEM_LOGO =
