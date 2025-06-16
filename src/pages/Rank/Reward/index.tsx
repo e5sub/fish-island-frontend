@@ -176,7 +176,7 @@ export default function DonationLeaderboard() {
             style={{ width: '100%', maxWidth: 300 }}
           />
           <p style={{ marginTop: 16, color: '#666' }}> 可以备注下用户名，方便 🐷播加入感谢名单哦~</p>
-          <p style={{color: '#666' }}>有疑问或需要帮助请联系站长微信：Lhc_iuuaiong</p>
+          <p style={{color: '#666' }}>有疑问或需要帮助请联系站长微信：th1040155</p>
         </div>
       </Modal>
 
