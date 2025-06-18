@@ -1,12 +1,9 @@
-# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
-# For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
-
 name: Node.js Package
 
 on:
   push:
     branches:
-      - master 
+      - master
     paths-ignore:
       - 'docs/**'
       - '*.md'
@@ -25,19 +22,42 @@ jobs:
       - run: npm ci
       - run: npm test
 
-  publish-gpr:
+  max-build:
     needs: build
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: https://npm.pkg.github.com/
       - run: npm ci
-      - run: npm publish
+      - run: npm run build:max
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  dist-push:
+    needs: max-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build:max
+      - name: Push dist to dist branch
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git checkout --orphan dist
+          git rm -rf .
+          mv dist/* .
+          git add .
+          git commit -m "CI: update dist [skip ci]"
+          git push --force origin dist
         env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
