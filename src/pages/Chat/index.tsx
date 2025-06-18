@@ -30,7 +30,7 @@ import {
   SendOutlined,
   SmileOutlined,
   SoundOutlined,
-  UploadOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
@@ -1227,6 +1227,9 @@ const ChatRoom: React.FC = () => {
 
     // 滚动到底部
     setTimeout(scrollToBottom, 100);
+
+    // 如果功能菜单是打开的，则关闭
+    closeMobileToolbar();
   };
 
   // 移除待发送的图片
@@ -1255,16 +1258,27 @@ const ChatRoom: React.FC = () => {
     // 过滤掉 ``` 字符
     value = value.replace(/```/g, '');
 
+    // 更新输入值
     setInputValue(value);
+
+    // 更新是否显示发送按钮的状态
+    const hasContent = value.trim().length > 0;
+    setShouldShowSendButton(hasContent);
+
+    // 如果输入框有内容并且功能面板显示中，则关闭功能面板
+    if (hasContent && isMobileToolbarVisible) {
+      closeMobileToolbar();
+    }
 
     // 检查是否输入了#摸鱼日历
     if (value === '#摸鱼日历') {
       fetchMoyuCalendar();
       setInputValue(''); // 清空输入框，因为这是触发词
+      setShouldShowSendButton(false); // 重置发送按钮状态
       return;
     }
 
-    // 检查是否输入了@
+    // 原有的@功能处理逻辑保持不变
     const lastAtPos = value.lastIndexOf('@');
     if (lastAtPos !== -1) {
       const searchText = value.slice(lastAtPos + 1);
@@ -2300,13 +2314,13 @@ const ChatRoom: React.FC = () => {
     if (currentUser?.userRole === 'admin') {
       setSelectedUser(user);
       setIsUserDetailModalVisible(true);
-      
+
       // 获取用户禁言状态
       try {
         const response = await getUserMuteInfoUsingGet({
           userId: user.id // 直接传递字符串 ID
         } as any); // 使用 as any 临时绕过类型检查
-        
+
         if (response.code === 0 && response.data) {
           setUserMuteInfo(response.data);
         } else {
@@ -2336,12 +2350,12 @@ const ChatRoom: React.FC = () => {
     if (!currentUser || currentUser.userRole !== 'admin') {
       return;
     }
-    
+
     try {
       const response = await unmuteUserUsingPost({
         userId: userId // 直接传递字符串 ID
       } as any); // 使用 as any 临时绕过类型检查
-      
+
       if (response.code === 0 && response.data) {
         messageApi.success('已解除用户禁言');
         // 更新禁言状态
@@ -2396,22 +2410,22 @@ const ChatRoom: React.FC = () => {
   const [customMuteDuration, setCustomMuteDuration] = useState<number | undefined>(undefined);
   const [muteLoading, setMuteLoading] = useState(false);
   const [userMuteInfo, setUserMuteInfo] = useState<API.UserMuteVO | null>(null);
-  
+
   // 执行禁言操作
   const handleConfirmMute = async () => {
     if (!selectedUser) return;
-    
+
     try {
       setMuteLoading(true);
-      
+
       // 使用自定义时间或预设时间
       const duration = customMuteDuration !== undefined ? customMuteDuration : muteDuration;
-      
+
       const response = await muteUserUsingPost({
-        userId: selectedUser.id, // 直接传递字符串 ID
-        duration: duration,
+        userId: selectedUser.id,
+        duration: Number(duration), // 转换为数字确保类型正确
       } as any); // 使用 as any 临时绕过类型检查
-      
+
       if (response.code === 0) {
         messageApi.success(`已禁言用户 ${selectedUser.name}，时长 ${formatMuteDuration(duration)}`);
         setIsMuteModalVisible(false);
@@ -2439,6 +2453,50 @@ const ChatRoom: React.FC = () => {
       return `${Math.floor(seconds / 3600)}小时`;
     } else {
       return `${Math.floor(seconds / 86400)}天`;
+    }
+  };
+
+  // 添加移动端功能面板状态
+  const [isMobileToolbarVisible, setIsMobileToolbarVisible] = useState<boolean>(false);
+  const [shouldShowSendButton, setShouldShowSendButton] = useState<boolean>(false);
+
+  // 添加切换移动端功能面板的函数
+  const toggleMobileToolbar = () => {
+    setIsMobileToolbarVisible(!isMobileToolbarVisible);
+  };
+
+  // 处理移动端功能按钮点击
+  const handleMobileToolClick = (action: string) => {
+    switch (action) {
+      case 'emoji':
+        setIsEmojiPickerVisible(true);
+        break;
+      case 'emoticon':
+        setIsEmoticonPickerVisible(true);
+        break;
+      case 'music':
+        setIsMusicSearchVisible(true);
+        break;
+      case 'redPacket':
+        setIsRedPacketModalVisible(true);
+        break;
+      case 'image':
+        fileInputRef.current?.click();
+        break;
+      case 'calendar':
+        fetchMoyuCalendar();
+        break;
+      default:
+        break;
+    }
+    // 点击后隐藏功能面板
+    setIsMobileToolbarVisible(false);
+  };
+
+  // 添加一个统一的关闭功能菜单面板函数
+  const closeMobileToolbar = () => {
+    if (isMobileToolbarVisible) {
+      setIsMobileToolbarVisible(false);
     }
   };
 
@@ -2491,7 +2549,17 @@ const ChatRoom: React.FC = () => {
       <div className={styles['floating-fish'] + ' ' + styles.fish3}>🐡</div>
       <div className={styles['floating-fish'] + ' ' + styles.bubble1}>💭</div>
       <div className={styles['floating-fish'] + ' ' + styles.bubble2}>💭</div>
-      <div className={styles.messageContainer} ref={messageContainerRef} onScroll={handleScroll}>
+      <div
+        className={styles.messageContainer}
+        ref={messageContainerRef}
+        onScroll={handleScroll}
+        onClick={() => {
+          // 点击消息区域时，如果功能面板是显示状态，则收起面板
+          if (isMobileToolbarVisible) {
+            setIsMobileToolbarVisible(false);
+          }
+        }}
+      >
         {loading && (
           <div className={styles.loadingWrapper}>
             <Spin />
@@ -2681,6 +2749,30 @@ const ChatRoom: React.FC = () => {
             accept="image/jpeg,image/png,image/gif,image/webp"
             disabled={uploading}
           />
+
+          {/* 移动端：切换加号/发送按钮 */}
+          {shouldShowSendButton ? (
+            <Button
+              icon={<SendOutlined />}
+              className={styles.mobileSendButton}
+              onClick={() => handleSend()}
+              disabled={uploading}
+              type="primary"
+            />
+          ) : (
+            <Button
+              icon={<PlusOutlined />}
+              className={styles.mobilePlusButton}
+              onClick={(e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                toggleMobileToolbar();
+              }}
+              disabled={uploading}
+            />
+          )}
+
+          {/* PC端按钮 */}
           <Popover
             content={emojiPickerContent}
             trigger="click"
@@ -2713,17 +2805,12 @@ const ChatRoom: React.FC = () => {
               onClick={() => setIsRedPacketModalVisible(true)}
             />
           )}
-          {/* 添加手机端图片上传按钮 */}
-          <Button
-            icon={<UploadOutlined />}
-            className={styles.imageUploadButton}
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          />
+
           <Input.TextArea
             ref={inputRef}
             value={inputValue}
             onChange={handleMentionInput}
+            onFocus={closeMobileToolbar}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 if (e.nativeEvent.isComposing) {
@@ -2742,6 +2829,7 @@ const ChatRoom: React.FC = () => {
             autoSize={{ minRows: 1, maxRows: 4 }}
             className={`${styles.chatTextArea} ${styles.hidePlaceholderOnMobile}`}
           />
+
           {isMentionListVisible && filteredUsers.length > 0 && (
             <div
               ref={mentionListRef}
@@ -2766,6 +2854,8 @@ const ChatRoom: React.FC = () => {
             </div>
           )}
           <span className={styles.inputCounter}>{inputValue.length}/200</span>
+
+          {/* PC端发送按钮 */}
           <Button
             type="text"
             icon={<SendOutlined />}
@@ -2776,7 +2866,59 @@ const ChatRoom: React.FC = () => {
             发送
           </Button>
         </div>
+
+        {/* 移动端功能面板 */}
+        {isMobileToolbarVisible && (
+          <div
+            className={styles.mobileToolbar}
+            onClick={(e) => {
+              // 阻止事件冒泡，防止点击面板内部元素时触发消息容器的点击事件
+              e.stopPropagation();
+            }}
+          >
+            <div className={styles.mobileToolRow}>
+              <div className={styles.mobileTool} onClick={() => handleMobileToolClick('image')}>
+                <div className={styles.mobileToolIcon}>
+                  <PictureOutlined />
+                </div>
+                <div className={styles.mobileToolText}>相册</div>
+              </div>
+              <div className={styles.mobileTool} onClick={() => handleMobileToolClick('emoticon')}>
+                <div className={styles.mobileToolIcon}>
+                  <SmileOutlined />
+                </div>
+                <div className={styles.mobileToolText}>表情</div>
+              </div>
+              <div className={styles.mobileTool} onClick={() => handleMobileToolClick('music')}>
+                <div className={styles.mobileToolIcon}>
+                  <CustomerServiceOutlined />
+                </div>
+                <div className={styles.mobileToolText}>音乐</div>
+              </div>
+              <div className={styles.mobileTool} onClick={() => handleMobileToolClick('calendar')}>
+                <div className={styles.mobileToolIcon}>
+                  <CalendarOutlined />
+                </div>
+                <div className={styles.mobileToolText}>摸鱼日历</div>
+              </div>
+            </div>
+            {(currentUser?.userRole === 'admin' || (currentUser?.level && currentUser.level >= 6)) && (
+              <div className={styles.mobileToolRow}>
+                <div className={styles.mobileTool} onClick={() => handleMobileToolClick('redPacket')}>
+                  <div className={styles.mobileToolIcon}>
+                    <GiftOutlined />
+                  </div>
+                  <div className={styles.mobileToolText}>红包</div>
+                </div>
+                <div className={styles.mobileTool} style={{ visibility: 'hidden' }}></div>
+                <div className={styles.mobileTool} style={{ visibility: 'hidden' }}></div>
+                <div className={styles.mobileTool} style={{ visibility: 'hidden' }}></div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
       <Modal
         title={
           <div className={styles.redPacketModalTitle}>
@@ -3197,7 +3339,7 @@ const ChatRoom: React.FC = () => {
           </div>
         )}
       </Modal>
-      
+
       {/* 添加禁言设置弹窗 */}
       <Modal
         title="设置禁言时长"
@@ -3208,8 +3350,8 @@ const ChatRoom: React.FC = () => {
       >
         <div className={styles.muteModalContent}>
           <div className={styles.muteOptions}>
-            <Radio.Group 
-              value={muteDuration} 
+            <Radio.Group
+              value={muteDuration}
               onChange={(e) => {
                 setMuteDuration(e.target.value);
                 setCustomMuteDuration(undefined);
@@ -3223,7 +3365,7 @@ const ChatRoom: React.FC = () => {
               <Radio.Button value={86400}>1天</Radio.Button>
             </Radio.Group>
           </div>
-          
+
           <div className={styles.customMuteDuration} style={{ marginTop: '16px' }}>
             <Input.Group compact>
               <Input
@@ -3234,8 +3376,8 @@ const ChatRoom: React.FC = () => {
                 onChange={(e) => setCustomMuteDuration(e.target.value ? Number(e.target.value) : undefined)}
                 min={1}
               />
-              <Button 
-                type="primary" 
+              <Button
+                type="primary"
                 style={{ width: '80px' }}
                 onClick={() => {
                   if (customMuteDuration && customMuteDuration > 0) {
@@ -3249,14 +3391,14 @@ const ChatRoom: React.FC = () => {
               </Button>
             </Input.Group>
           </div>
-          
+
           <div className={styles.muteButtons} style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
             <Button onClick={() => setIsMuteModalVisible(false)} style={{ marginRight: '8px' }}>
               取消
             </Button>
-            <Button 
-              type="primary" 
-              danger 
+            <Button
+              type="primary"
+              danger
               onClick={handleConfirmMute}
               loading={muteLoading}
             >

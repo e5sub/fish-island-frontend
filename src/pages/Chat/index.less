@@ -699,8 +699,8 @@
         }
       }
 
-      .emojiButton,
       .emoticonButton,
+      .musicButton,
       .redPacketButton {
         margin-right: 4px;
         @media screen and (max-width: 768px) {
@@ -844,14 +844,9 @@
     }
 
     @media screen and (max-width: 768px) {
-      margin: 8px;
-      padding: 12px;
-
-      .inputRow {
-        .ant-btn {
-          padding: 0 16px;
-        }
-      }
+      padding: 10px;
+      margin: 0;
+      border-radius: 0;
     }
   }
 
@@ -934,6 +929,134 @@
 
       &:hover {
         color: #ff4d4f;
+      }
+    }
+  }
+
+  // 添加移动端功能面板和按钮样式
+  .mobileToolbar {
+    display: none;
+    width: 100%;
+    background-color: #f7f7f7;
+    border-radius: 12px;
+    padding: 16px 0 8px;
+    margin-top: 12px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+
+    @media screen and (max-width: 768px) {
+      display: block;
+      margin-top: 8px;
+      padding: 12px 0 4px;
+      border-radius: 8px;
+    }
+
+    .mobileToolRow {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 16px;
+    }
+
+    .mobileTool {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 60px;
+      cursor: pointer;
+
+      .mobileToolIcon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 25px;
+        background-color: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 6px;
+        font-size: 20px;
+        color: #1890ff;
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+      }
+
+      .mobileToolText {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+  }
+
+  .inputArea {
+    .inputRow {
+      .mobileSendButton,
+      .mobilePlusButton {
+        display: none;
+
+        @media screen and (max-width: 768px) {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 18px;
+          color: white;
+          transition: all 0.3s ease;
+          border: none;
+          box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
+          order: 2;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+          }
+
+          &:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+          }
+
+          .anticon {
+            font-size: 18px;
+          }
+        }
+      }
+
+      .mobileSendButton {
+        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+      }
+
+      .mobilePlusButton {
+        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+      }
+
+      // 更新原有的 imageUploadButton 使其不再显示，因为现在我们有了新的移动端菜单
+      .imageUploadButton {
+        display: none;
+      }
+
+      // 在移动端调整输入框样式
+      .chatTextArea {
+        @media screen and (max-width: 768px) {
+          flex: 1;
+          margin-right: 8px;
+          order: 1;
+          max-height: 80px;
+        }
+      }
+
+      // 在移动端隐藏PC端发送按钮
+      .sendButton {
+        @media screen and (max-width: 768px) {
+          display: none;
+        }
       }
     }
   }
@@ -1104,7 +1227,7 @@
     position: relative;
     overflow: hidden;
     box-shadow: 0 0 15px rgba(245, 175, 25, 0.6);
-    
+
     &::after {
       content: '';
       position: absolute;
@@ -1119,7 +1242,7 @@
       pointer-events: none;
       z-index: 1;
     }
-    
+
     &::before {
       content: '';
       position: absolute;
@@ -1131,7 +1254,7 @@
       z-index: 1;
       animation: pulse 3s ease-in-out infinite alternate;
     }
-    
+
     .adminText {
       position: relative;
       z-index: 2;
@@ -2060,10 +2183,6 @@
       color: transparent !important;
     }
   }
-}
-
-.musicButton {
-  margin-right: 4px;
 }
 
 .musicSearch {
