@@ -22,7 +22,9 @@ jobs:
       - run: npm install --legacy-peer-deps
       - run: npm install -g @umijs/max
       - run: max build
-      - run：mkdir -p artifact
+      - name: Create artifact directory
+        run: mkdir -p artifact
+        shell: bash
       - uses: actions/upload-artifact@v4
         with:
           name: dist
@@ -51,12 +53,11 @@ jobs:
             git rm -rf dist
             git commit -m "CI: clean old dist [skip ci]" || echo "No old dist to clean"
           fi
-            cp -r artifact ./dist
+            cp -r artifact/dist ./dist
           # 强制添加新的 dist
           git add -f dist
           git commit -m "CI: update dist [skip ci]" || echo "No changes to commit"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
           git push -f origin master
-          rm -rf artifact
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
