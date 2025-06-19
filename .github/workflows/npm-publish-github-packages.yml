@@ -55,13 +55,13 @@ jobs:
          if [ -d artifact/dist ]; then
            cp -r artifact/dist ./dist
          else
-         echo "artifact/dist 不存在！" && exit 1
+           echo "artifact/dist 不存在！" && exit 1
          fi
 
         # 强制添加新的 dist
-        git add -f dist
-        git commit -m "CI: update dist [skip ci]" || echo "No changes to commit"
-        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        git push -f origin master
+           git add -f dist
+           git commit -m "CI: update dist [skip ci]" || echo "No changes to commit"
+           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+           git push -f origin master
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
