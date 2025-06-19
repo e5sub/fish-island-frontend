@@ -22,10 +22,11 @@ jobs:
       - run: npm install --legacy-peer-deps
       - run: npm install -g @umijs/max
       - run: max build
+      - run：mkdir -p artifact
       - uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: artifact/
 
   dist-push:
     needs: max-build
@@ -37,7 +38,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: artifact/
       - name: Clean and Force Push dist
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -50,11 +51,12 @@ jobs:
             git rm -rf dist
             git commit -m "CI: clean old dist [skip ci]" || echo "No old dist to clean"
           fi
-            cp -r dist ./dist
+            cp -r artifact ./dist
           # 强制添加新的 dist
           git add -f dist
           git commit -m "CI: update dist [skip ci]" || echo "No changes to commit"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
           git push -f origin master
+          rm -rf artifact
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
