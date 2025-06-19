@@ -1508,8 +1508,18 @@ const ChatRoom: React.FC = () => {
 
   const getLevelEmoji = (level: number) => {
     switch (level) {
+      case 12:
+        return '🔱'; // 摸鱼祖师
+      case 11:
+        return '✨'; // 摸鱼天尊
+      case 10:
+        return '🌟'; // 摸鱼圣人
+      case 9:
+        return '🌈'; // 摸鱼仙君
+      case 8:
+        return '🏮'; // 摸鱼尊者
       case 7:
-        return '👑'; // 最高级
+        return '👑'; // 摸鱼真人
       case 6:
         return '💫';
       case 5:
@@ -1585,8 +1595,33 @@ const ChatRoom: React.FC = () => {
     let tagClass = '';
 
     switch (level) {
+      case 12:
+        tagText = '摸鱼祖师';
+        tagEmoji = '🔱';
+        tagClass = styles.levelTagGrandMaster;
+        break;
+      case 11:
+        tagText = '摸鱼天尊';
+        tagEmoji = '✨';
+        tagClass = styles.levelTagCelestial;
+        break;
+      case 10:
+        tagText = '摸鱼圣人';
+        tagEmoji = '🌟';
+        tagClass = styles.levelTagSaint;
+        break;
+      case 9:
+        tagText = '摸鱼仙君';
+        tagEmoji = '🌈';
+        tagClass = styles.levelTagImmortal;
+        break;
+      case 8:
+        tagText = '摸鱼尊者';
+        tagEmoji = '🏮';
+        tagClass = styles.levelTagElder;
+        break;
       case 7:
-        tagText = '摸鱼皇帝';
+        tagText = '摸鱼真人';
         tagEmoji = '👑';
         tagClass = styles.levelTagMaster;
         break;
