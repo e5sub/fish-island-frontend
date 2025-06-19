@@ -38,16 +38,26 @@ jobs:
         with:
           name: dist
           path: dist/
-      - name: Commit and Push dist
+      - name: Clean and Force Push dist
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git checkout master
           git pull origin master
-          cp -r dist/* .
-          git add dist -f
+
+          # 清除仓库原有的 dist 内容
+          if [ -d dist ]; then
+            git rm -rf dist
+            git commit -m "CI: clean old dist [skip ci]" || echo "No old dist to clean"
+          fi
+
+          # 拷贝新的 dist
+          cp -r dist /home/runner/work/${GITHUB_REPOSITORY#*/}/${GITHUB_REPOSITORY#*/}/dist
+
+          # 强制添加新的 dist
+          git add -f dist
           git commit -m "CI: update dist [skip ci]" || echo "No changes to commit"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-          git push origin master
+          git push -f origin master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
