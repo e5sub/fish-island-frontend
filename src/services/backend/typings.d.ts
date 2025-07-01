@@ -86,6 +86,18 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseListUndercoverPlayerDetailVO_ = {
+    code?: number;
+    data?: UndercoverPlayerDetailVO[];
+    message?: string;
+  };
+
+  type BaseResponseListUndercoverVoteVO_ = {
+    code?: number;
+    data?: UndercoverVoteVO[];
+    message?: string;
+  };
+
   type BaseResponseListUserChatResponse_ = {
     code?: number;
     data?: UserChatResponse[];
@@ -206,6 +218,24 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseUndercoverPlayerDetailVO_ = {
+    code?: number;
+    data?: UndercoverPlayerDetailVO;
+    message?: string;
+  };
+
+  type BaseResponseUndercoverPlayerVO_ = {
+    code?: number;
+    data?: UndercoverPlayerVO;
+    message?: string;
+  };
+
+  type BaseResponseUndercoverRoomVO_ = {
+    code?: number;
+    data?: UndercoverRoomVO;
+    message?: string;
+  };
+
   type BaseResponseUser_ = {
     code?: number;
     data?: User;
@@ -291,6 +321,11 @@ declare namespace API {
     source: string;
   };
 
+  type checkGameOverUsingGETParams = {
+    /** roomId */
+    roomId: string;
+  };
+
   type CosCredentialVo = {
     /** 桶名称 */
     bucket?: string;
@@ -368,12 +403,24 @@ declare namespace API {
     userId?: number;
   };
 
+  type eliminatePlayerUsingPOSTParams = {
+    /** roomId */
+    roomId: string;
+    /** userId */
+    userId: number;
+  };
+
   type EmoticonFavour = {
     createTime?: string;
     emoticonSrc?: string;
     id?: number;
     updateTime?: string;
     userId?: number;
+  };
+
+  type endGameUsingPOSTParams = {
+    /** roomId */
+    roomId: string;
   };
 
   type exchangeFrameUsingPOSTParams = {
@@ -393,6 +440,11 @@ declare namespace API {
   type getCosCredentialUsingGETParams = {
     /** fileName */
     fileName?: string;
+  };
+
+  type getCurrentPlayerInfoUsingGETParams = {
+    /** roomId */
+    roomId: string;
   };
 
   type getDonationRecordsVoByIdUsingGETParams = {
@@ -415,6 +467,18 @@ declare namespace API {
     id?: number;
   };
 
+  type getPlayerDetailInfoUsingGETParams = {
+    /** roomId */
+    roomId: string;
+  };
+
+  type getPlayerInfoUsingGETParams = {
+    /** roomId */
+    roomId: string;
+    /** userId */
+    userId: number;
+  };
+
   type getPostVoByIdUsingGETParams = {
     /** id */
     id?: number;
@@ -428,6 +492,16 @@ declare namespace API {
   type getRedPacketRecordsUsingGETParams = {
     /** 红包ID */
     redPacketId: string;
+  };
+
+  type getRoomPlayersDetailUsingGETParams = {
+    /** roomId */
+    roomId: string;
+  };
+
+  type getRoomVotesUsingGETParams = {
+    /** roomId */
+    roomId: string;
   };
 
   type getUserByIdUsingGETParams = {
@@ -994,6 +1068,11 @@ declare namespace API {
     id?: number;
   };
 
+  type startGameUsingPOSTParams = {
+    /** roomId */
+    roomId: string;
+  };
+
   type streamChatDemoUsingGETParams = {
     /** prompt */
     prompt: string;
@@ -1022,6 +1101,67 @@ declare namespace API {
   type unbindUsingDELETEParams = {
     /** source */
     source: string;
+  };
+
+  type UndercoverPlayerDetailVO = {
+    isEliminated?: boolean;
+    userAvatar?: string;
+    userId?: number;
+    userName?: string;
+    voteCount?: number;
+  };
+
+  type UndercoverPlayerVO = {
+    isEliminated?: boolean;
+    role?: string;
+    userId?: number;
+    word?: string;
+  };
+
+  type UndercoverRoomCreateRequest = {
+    /** 平民词 */
+    civilianWord?: string;
+    /** 持续时间秒 */
+    duration?: number;
+    /** 房间最大人数 */
+    maxPlayers?: number;
+    /** 卧底词 */
+    undercoverWord?: string;
+  };
+
+  type UndercoverRoomJoinRequest = {
+    roomId?: string;
+  };
+
+  type UndercoverRoomVO = {
+    createTime?: string;
+    duration?: number;
+    eliminatedIds?: number[];
+    maxPlayers?: number;
+    participantIds?: number[];
+    participants?: UndercoverPlayerDetailVO[];
+    remainingTime?: number;
+    role?: string;
+    roomId?: string;
+    startTime?: string;
+    status?: 'WAITING' | 'PLAYING' | 'ENDED';
+    votes?: UndercoverVoteVO[];
+    word?: string;
+  };
+
+  type UndercoverVoteRequest = {
+    roomId?: string;
+    targetId?: number;
+  };
+
+  type UndercoverVoteVO = {
+    targetAvatar?: string;
+    targetId?: number;
+    targetName?: string;
+    voteTime?: string;
+    voterAvatar?: string;
+    voterId?: number;
+    voterName?: string;
   };
 
   type unmuteUserUsingPOSTParams = {

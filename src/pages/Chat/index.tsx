@@ -1,6 +1,7 @@
 import zhData from '@emoji-mart/data/i18n/zh.json';
 import EmoticonPicker from '@/components/EmoticonPicker';
 import MessageContent from '@/components/MessageContent';
+import RoomInfoCard from '@/components/RoomInfoCard';
 import {
   getOnlineUserListUsingGet,
   listMessageVoByPageUsingPost,
@@ -31,6 +32,7 @@ import {
   SmileOutlined,
   SoundOutlined,
   CalendarOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
@@ -193,6 +195,8 @@ const ChatRoom: React.FC = () => {
 
   const [isUserDetailModalVisible, setIsUserDetailModalVisible] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  const [isRoomInfoVisible, setIsRoomInfoVisible] = useState<boolean>(false);
 
   // 添加搜索音乐的函数
   const handleMusicSearch = async () => {
@@ -1567,7 +1571,7 @@ const ChatRoom: React.FC = () => {
             tagEmoji = '💎';
             tagClass = styles.titleTagPlatinum;
             break;
-          case '4': // 黄金摸鱼官
+          case '4': // 梦幻摸鱼官
             tagEmoji = '🌟';
             tagClass = styles.titleTagGold;
             break;
@@ -2537,6 +2541,19 @@ const ChatRoom: React.FC = () => {
 
   return (
     <div className={styles.chatRoom}>
+      {/* 房间信息卡片 */}
+      <RoomInfoCard visible={isRoomInfoVisible} onClose={() => setIsRoomInfoVisible(false)} />
+      
+      {/* 添加一个切换按钮 */}
+      <Button
+        type="primary"
+        shape="circle"
+        icon={<TeamOutlined />}
+        className={styles.roomInfoButton}
+        onClick={() => setIsRoomInfoVisible(!isRoomInfoVisible)}
+        title="查看你画我猜房间"
+      />
+      
       {currentMusic && (
         <div className={styles.musicFloatingPlayer}>
           <img src={currentMusic.cover} alt="cover" className={styles.musicCover} />

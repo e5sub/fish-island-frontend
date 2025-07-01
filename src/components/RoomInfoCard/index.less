@@ -1,0 +1,203 @@
+.roomInfoCardContainer {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  width: 300px;
+}
+
+.roomInfoCard {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  
+  :global(.ant-card-head) {
+    padding: 0 16px;
+  }
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.statusBadge {
+  margin-left: auto;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 0;
+}
+
+.roomContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roomHeader {
+  margin-bottom: 8px;
+}
+
+.roomName {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.roomId {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.infoIcon {
+  color: #1890ff;
+}
+
+.creatorAvatar {
+  margin-right: 4px;
+}
+
+/* 优化操作按钮区域布局 */
+.actionContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.adminActionsSection, .userActionsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  color: #333;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+}
+
+.adminActions, .userActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.adminActionsCenter {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+/* 优化按钮样式 */
+.adminButton {
+  width: 100%;
+  height: 40px;
+  font-size: 14px;
+}
+
+.actionButton {
+  min-width: 90px;
+}
+
+.actionButtons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  gap: 8px;
+}
+
+// 添加玩家列表样式
+.playersList {
+  margin-top: 8px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.playersTitle {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.playerItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px !important;
+
+  &:hover {
+    background-color: #f5f5f5;
+  }
+}
+
+.playerInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playerName {
+  font-size: 13px;
+  color: #333;
+}
+
+.playerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.voteCount {
+  display: flex;
+  align-items: center;
+}
+
+.eliminatedTag {
+  font-size: 12px;
+  color: #ff4d4f;
+  background-color: #fff1f0;
+  border: 1px solid #ffccc7;
+  padding: 0 6px;
+  border-radius: 4px;
+}
+
+// 折叠状态的样式
+.collapsed {
+  width: auto;
+  
+  .roomInfoCard {
+    width: auto;
+  }
+}
+
+// 悬浮效果
+.roomInfoCard:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+} 

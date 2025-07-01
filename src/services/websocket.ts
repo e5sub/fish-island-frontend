@@ -1,7 +1,7 @@
-import { BACKEND_HOST_WS } from "@/constants";
-import type { MessageInstance } from "antd/es/message/interface";
-import { message } from "antd";
-import { startNotification, stopNotification } from "@/utils/notification";
+import {BACKEND_HOST_WS} from "@/constants";
+import type {MessageInstance} from "antd/es/message/interface";
+import {message} from "antd";
+import {startNotification, stopNotification} from "@/utils/notification";
 
 class WebSocketService {
   private static instance: WebSocketService;
@@ -18,6 +18,10 @@ class WebSocketService {
     // 添加默认的错误消息处理器
     this.addMessageHandler('error', (data) => {
       message.error(data.data || '发生错误');
+    });
+    // 添加默认的系统消息处理器
+    this.addMessageHandler('info', (data) => {
+      message.info(data.data);
     });
 
     // 监听窗口焦点变化

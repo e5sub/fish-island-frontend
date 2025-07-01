@@ -16,6 +16,7 @@ import * as postThumbController from './postThumbController';
 import * as redPacketController from './redPacketController';
 import * as restAuthController from './restAuthController';
 import * as todoController from './todoController';
+import * as undercoverGameController from './undercoverGameController';
 import * as userController from './userController';
 import * as userMuteController from './userMuteController';
 import * as userTitleController from './userTitleController';
@@ -36,6 +37,7 @@ export default {
   postThumbController,
   redPacketController,
   todoController,
+  undercoverGameController,
   userController,
   userMuteController,
   userTitleController,
