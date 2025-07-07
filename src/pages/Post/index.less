@@ -609,3 +609,51 @@
     }
   }
 }
+
+/* 滚动容器样式 */
+#scrollableDiv {
+  height: calc(100vh - 300px);
+  overflow: auto;
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 576px) {
+  #scrollableDiv {
+    height: calc(100vh - 250px);
+  }
+}
+
+/* 骨架屏样式 */
+.skeleton-item {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+}
+
+.skeleton-header {
+  display: flex;
+  margin-bottom: 16px;
+}
+
+.skeleton-avatar {
+  margin-right: 12px;
+}
+
+.skeleton-info {
+  flex: 1;
+}
+
+/* 加载图标样式 */
+.loading-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.loading-container .ant-spin-text {
+  margin-top: 8px;
+  color: #1890ff;
+  font-size: 14px;
+}

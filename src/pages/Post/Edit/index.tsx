@@ -146,8 +146,7 @@ const PostEdit: React.FC = () => {
         'fullscreen', 'preview', 'help', 'both', 'edit-mode',
       ],
       cache: {
-        enable: true,
-        id: 'post-edit-cache',
+        enable: false, // 禁用缓存功能
       },
       counter: {
         enable: true,

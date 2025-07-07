@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {Card, List, Tag, Space, Button, Input, Tabs, Avatar, Badge, message, Modal} from 'antd';
+import {Card, List, Tag, Space, Button, Input, Tabs, Avatar, Badge, message, Modal, Spin, Skeleton} from 'antd';
 import type {SizeType} from 'antd/es/config-provider/SizeContext';
 import {
   FireOutlined,
@@ -24,6 +24,7 @@ import {listTagsVoByPageUsingPost} from '@/services/backend/tagsController';
 import {getLoginUserUsingGet} from '@/services/backend/userController';
 import './index.less';
 import moment from 'moment';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 const {TabPane} = Tabs;
 const {Search} = Input;
@@ -47,6 +48,7 @@ const PostPage: React.FC = () => {
     pageSize: 5,
     total: 0,
   });
+  const [hasMore, setHasMore] = useState<boolean>(true);
 
   // 检测是否为移动设备
   const [isMobile, setIsMobile] = useState<boolean>(false);
@@ -148,11 +150,21 @@ const PostPage: React.FC = () => {
 
       const result = await listPostVoByPageUsingPost(params);
       if (result.data) {
-        setPosts(result.data.records || []);
+        // 如果是第一页，直接设置数据
+        if (pagination.current === 1) {
+          setPosts(result.data.records || []);
+        } else {
+          // 否则，追加数据
+          setPosts(prevPosts => [...prevPosts, ...(result.data?.records || [])]);
+        }
+        
         setPagination({
           ...pagination,
           total: result.data.total || 0,
         });
+        
+        // 判断是否还有更多数据
+        setHasMore((result.data.records?.length || 0) > 0 && (pagination.current * pagination.pageSize) < (result.data.total || 0));
       }
     } catch (error) {
       console.error('获取帖子列表失败:', error);
@@ -227,12 +239,22 @@ const PostPage: React.FC = () => {
   const handleSearch = (value: string) => {
     setSearchQuery(value);
     setPagination({...pagination, current: 1}); // 重置到第一页
+    setPosts([]); // 清空现有数据
+    setHasMore(true); // 重置hasMore状态
   };
 
   // 处理Tab切换
   const handleTabChange = (key: string) => {
     setCurrentTab(key);
     setPagination({...pagination, current: 1}); // 重置到第一页
+    setPosts([]); // 清空现有数据
+    setHasMore(true); // 重置hasMore状态
+  };
+
+  // 加载更多数据
+  const loadMoreData = () => {
+    if (loading) return;
+    setPagination(prev => ({...prev, current: prev.current + 1}));
   };
 
   // 处理分页变化
@@ -253,6 +275,30 @@ const PostPage: React.FC = () => {
   const formatTime = (timeString?: string) => {
     if (!timeString) return '';
     return moment(timeString).format('YYYY-MM-DD HH:mm');
+  };
+
+  // 处理标签点击
+  const handleTagClick = (tagId: number | null) => {
+    setSelectedTag(tagId);
+    setPagination({...pagination, current: 1}); // 重置到第一页
+    setPosts([]); // 清空现有数据
+    setHasMore(true); // 重置hasMore状态
+  };
+
+  // 渲染骨架屏
+  const renderPostSkeleton = () => {
+    return Array(3).fill(null).map((_, index) => (
+      <div key={index} className="skeleton-item">
+        <div className="skeleton-header">
+          <Skeleton.Avatar active size={isMobile ? 32 : 40} className="skeleton-avatar" />
+          <div className="skeleton-info">
+            <Skeleton.Input style={{ width: '150px', marginBottom: '8px' }} active />
+            <Skeleton.Input style={{ width: '100px' }} active />
+          </div>
+        </div>
+        <Skeleton title={{ width: '80%' }} paragraph={{ rows: 2 }} active />
+      </div>
+    ));
   };
 
   useEffect(() => {
@@ -299,7 +345,7 @@ const PostPage: React.FC = () => {
                   <Tag
                     color={selectedTag === null ? 'orange' : ''}
                     className={selectedTag === null ? 'category-tag active' : 'category-tag'}
-                    onClick={() => setSelectedTag(null)}
+                    onClick={() => handleTagClick(null)}
                   >
                     全部
                   </Tag>
@@ -308,7 +354,7 @@ const PostPage: React.FC = () => {
                       key={tag.id}
                       color={selectedTag === tag.id ? getTagColor(tag.id) : getTagColor(tag.id)}
                       className={selectedTag === tag.id ? 'category-tag active' : 'category-tag'}
-                      onClick={() => setSelectedTag(tag.id || null)}
+                      onClick={() => handleTagClick(tag.id || null)}
                     >
                       {tag.tagsName}
                     </Tag>
@@ -386,108 +432,122 @@ const PostPage: React.FC = () => {
               </div>
             </div>
 
-            <List
-              itemLayout="vertical"
-              size="large"
-              loading={loading}
-              pagination={{
-                current: pagination.current,
-                pageSize: pagination.pageSize,
-                total: pagination.total,
-                onChange: handlePageChange,
-                simple: isMobile, // 移动端使用简单分页
-                size: isMobile ? "small" : "default",
-              }}
-              dataSource={posts}
-              renderItem={item => (
-                <List.Item
-                  key={item.id}
-                  className="post-item"
-                  onClick={() => history.push(`/post/${String(item.id)}`)}
-                  style={{cursor: 'pointer'}}
-                  actions={[
-                    // 在移动端不显示阅读量、点赞数和评论数
-                    !isMobile &&
-                    <span onClick={(e) => e.stopPropagation()}><EyeOutlined/> 浏览 {item.viewNum || 0}</span>,
-                    !isMobile &&
-                    <span onClick={(e) => e.stopPropagation()}><LikeOutlined/> 点赞 {item.thumbNum || 0}</span>,
-                    !isMobile &&
-                    <span onClick={(e) => e.stopPropagation()}><MessageOutlined/> 评论 {item.commentNum || 0}</span>,
-                    canDeletePost(item) && (
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          history.push(`/post/edit/${item.id}`);
-                        }}
-                        className="edit-action"
-                      >
-                        <EditOutlined style={{color: '#1890ff'}}/> {isMobile ? '' : '编辑'}
-                      </span>
-                    ),
-                    canDeletePost(item) && (
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // 直接传递原始ID，避免Number()转换导致精度丢失
-                          showDeleteConfirm(item.id);
-                        }}
-                        className="delete-action"
-                      >
-                        <DeleteOutlined style={{color: '#ff4d4f'}}/> {isMobile ? '' : '删除'}
-                      </span>
-                    ),
-                  ].filter(Boolean)}
+            <div id="scrollableDiv" style={{ overflow: 'auto', padding: '0 16px' }}>
+              {loading && posts.length === 0 ? (
+                renderPostSkeleton()
+              ) : (
+                <InfiniteScroll
+                  dataLength={posts.length}
+                  next={loadMoreData}
+                  hasMore={hasMore}
+                  loader={
+                    <div className="loading-container">
+                      <Spin size="large" tip="加载中..." />
+                    </div>
+                  }
+                  endMessage={
+                    <div className="loading-container" style={{ color: '#999' }}>
+                      没有更多帖子了
+                    </div>
+                  }
+                  scrollableTarget="scrollableDiv"
                 >
-                  <div className="post-item-header">
-                    <Avatar src={item.user?.userAvatar || 'https://joeschmoe.io/api/v1/random'}
-                            size={isMobile ? 32 : 40}/>
-                    <div className="post-author-info">
-                      <div className="author-name">
-                        <span>{item.user?.userName || '匿名用户'}</span>
-                        <span className="post-time">{formatTime(item.createTime)}</span>
-                      </div>
-                      <div className="post-tags">
-                        {item.tagList && item.tagList.map((tag, index) => {
-                          // 查找对应的标签ID以获取颜色
-                          const tagObj = tags.find(t => t.tagsName === tag);
-                          const color = tagObj ? getTagColor(tagObj.id) : 'blue';
-                          // 在移动设备上限制显示的标签数量
-                          if (isMobile && index > 1) return null;
-                          return (
-                            <Tag
-                              key={index}
-                              color={color}
-                              className="category-tag-small"
-                              onClick={(e) => e.stopPropagation()}
+                  <List
+                    itemLayout="vertical"
+                    size="large"
+                    dataSource={posts}
+                    renderItem={item => (
+                      <List.Item
+                        key={item.id}
+                        className="post-item"
+                        onClick={() => history.push(`/post/${String(item.id)}`)}
+                        style={{cursor: 'pointer'}}
+                        actions={[
+                          // 在移动端不显示阅读量、点赞数和评论数
+                          !isMobile &&
+                          <span onClick={(e) => e.stopPropagation()}><EyeOutlined/> 浏览 {item.viewNum || 0}</span>,
+                          !isMobile &&
+                          <span onClick={(e) => e.stopPropagation()}><LikeOutlined/> 点赞 {item.thumbNum || 0}</span>,
+                          !isMobile &&
+                          <span onClick={(e) => e.stopPropagation()}><MessageOutlined/> 评论 {item.commentNum || 0}</span>,
+                          canDeletePost(item) && (
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                history.push(`/post/edit/${item.id}`);
+                              }}
+                              className="edit-action"
                             >
-                              {tag}
-                            </Tag>
-                          );
-                        })}
-                        {/* 如果在移动设备上有更多标签，显示+N */}
-                        {isMobile && item.tagList && item.tagList.length > 2 && (
-                          <Tag className="category-tag-small">
-                            +{item.tagList.length - 2}
-                          </Tag>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                              <EditOutlined style={{color: '#1890ff'}}/> {isMobile ? '' : '编辑'}
+                            </span>
+                          ),
+                          canDeletePost(item) && (
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // 直接传递原始ID，避免Number()转换导致精度丢失
+                                showDeleteConfirm(item.id);
+                              }}
+                              className="delete-action"
+                            >
+                              <DeleteOutlined style={{color: '#ff4d4f'}}/> {isMobile ? '' : '删除'}
+                            </span>
+                          ),
+                        ].filter(Boolean)}
+                      >
+                        <div className="post-item-header">
+                          <Avatar src={item.user?.userAvatar || 'https://joeschmoe.io/api/v1/random'}
+                                  size={isMobile ? 32 : 40}/>
+                          <div className="post-author-info">
+                            <div className="author-name">
+                              <span>{item.user?.userName || '匿名用户'}</span>
+                              <span className="post-time">{formatTime(item.createTime)}</span>
+                            </div>
+                            <div className="post-tags">
+                              {item.tagList && item.tagList.map((tag, index) => {
+                                // 查找对应的标签ID以获取颜色
+                                const tagObj = tags.find(t => t.tagsName === tag);
+                                const color = tagObj ? getTagColor(tagObj.id) : 'blue';
+                                // 在移动设备上限制显示的标签数量
+                                if (isMobile && index > 1) return null;
+                                return (
+                                  <Tag
+                                    key={index}
+                                    color={color}
+                                    className="category-tag-small"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {tag}
+                                  </Tag>
+                                );
+                              })}
+                              {/* 如果在移动设备上有更多标签，显示+N */}
+                              {isMobile && item.tagList && item.tagList.length > 2 && (
+                                <Tag className="category-tag-small">
+                                  +{item.tagList.length - 2}
+                                </Tag>
+                              )}
+                            </div>
+                          </div>
+                        </div>
 
-                  <div className="post-content-wrapper">
-                    <div className="post-title">
-                      {item.title}
-                    </div>
+                        <div className="post-content-wrapper">
+                          <div className="post-title">
+                            {item.title}
+                          </div>
 
-                    {item.latestComment && (
-                      <div className="post-content hot-comment">
-                        {item.latestComment.content}
-                      </div>
+                          {item.latestComment && (
+                            <div className="post-content hot-comment">
+                              {item.latestComment.content}
+                            </div>
+                          )}
+                        </div>
+                      </List.Item>
                     )}
-                  </div>
-                </List.Item>
+                  />
+                </InfiniteScroll>
               )}
-            />
+            </div>
           </Card>
         </div>
 
