@@ -28,6 +28,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import React, { TouchEvent, useEffect, useRef, useState } from 'react';
 import './Index.less';
+import eventBus from '@/utils/eventBus';
 
 const STORAGE_KEY = 'selected_source_ids';
 const TAB_VISIBLE_KEY = 'tab_visible';
@@ -66,6 +67,7 @@ const Index: React.FC = () => {
   const [touchEndXY, setTouchEndXY] = useState({ x: 0, y: 0 });
   // 内容区域的引用，用于滚动控制
   const contentRef = useRef<HTMLDivElement>(null);
+  const [showUndercoverRoom, setShowUndercoverRoom] = useState(false);
 
   // 添加窗口大小变化监听
   useEffect(() => {
@@ -249,6 +251,20 @@ const Index: React.FC = () => {
     }
     // 否则认为是点击，不做切换
   };
+
+  // 在组件中添加对eventBus事件的监听
+  useEffect(() => {
+    // 监听显示谁是卧底房间事件
+    const handleShowUndercoverRoom = () => {
+      setShowUndercoverRoom(true);
+    };
+    
+    eventBus.on('show_undercover_room', handleShowUndercoverRoom);
+    
+    return () => {
+      eventBus.off('show_undercover_room', handleShowUndercoverRoom);
+    };
+  }, []);
 
   return (
     <>

@@ -33,6 +33,7 @@ import {
   SoundOutlined,
   CalendarOutlined,
   TeamOutlined,
+  EllipsisOutlined,
 } from '@ant-design/icons';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
@@ -50,10 +51,13 @@ import {
   Radio,
   Spin,
   Tabs,
+  Badge,
 } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import styles from './index.less';
+import { UNDERCOVER_NOTIFICATION, UNDERCOVER_ROOM_STATUS } from '@/constants';
+import eventBus from '@/utils/eventBus';
 
 interface Message {
   id: string;
@@ -197,6 +201,7 @@ const ChatRoom: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const [isRoomInfoVisible, setIsRoomInfoVisible] = useState<boolean>(false);
+  const [undercoverNotification, setUndercoverNotification] = useState<string>(UNDERCOVER_NOTIFICATION.NONE);
 
   // 添加搜索音乐的函数
   const handleMusicSearch = async () => {
@@ -648,6 +653,7 @@ const ChatRoom: React.FC = () => {
                       isAdmin: record.messageWrapper.message.quotedMessage.sender?.isAdmin || false,
                       region:
                         record.messageWrapper?.message.quotedMessage?.sender?.region || '未知地区',
+                      country: record.messageWrapper?.message.quotedMessage?.sender?.country,
                       avatarFramerUrl:
                         record.messageWrapper?.message.quotedMessage?.sender?.avatarFramerUrl,
                       titleId: record.messageWrapper?.message.quotedMessage?.sender?.titleId,
@@ -660,9 +666,12 @@ const ChatRoom: React.FC = () => {
                   }
                 : undefined,
               region: userIpInfo?.region || '未知地区',
+              country: userIpInfo?.country,
+              workdayType: workdayType,
+              currentWeekType: currentWeekType,
             };
           })
-          .filter(Boolean); // 过滤掉null值
+          .filter(Boolean) as Message[]; // 使用类型断言
 
         // 将新消息的ID添加到已加载集合中
         historyMessages.forEach((msg) => loadedMessageIds.add(msg.id));
@@ -676,12 +685,12 @@ const ChatRoom: React.FC = () => {
         // 处理历史消息，确保正确的时间顺序（旧消息在上，新消息在下）
         if (isFirstLoad) {
           // 首次加载时，反转消息顺序，使最旧的消息在上面
-          setMessages(historyMessages.reverse());
+          setMessages(historyMessages.reverse() as Message[]);
         } else {
           // 加载更多历史消息时，新的历史消息应该在当前消息的上面
           // 只有在有新消息时才更新状态
           if (historyMessages.length > 0) {
-            setMessages((prev) => [...historyMessages.reverse(), ...prev]);
+            setMessages((prev) => [...(historyMessages.reverse() as Message[]), ...prev]);
           }
         }
 
@@ -807,6 +816,8 @@ const ChatRoom: React.FC = () => {
 
       // 设置预览图片
       setPendingImageUrl(fallbackRes.data);
+      // 上传图片后更新发送按钮状态
+      setShouldShowSendButton(true);
       // } else {
       //   // 设置预览图片
       //   setPendingImageUrl(res.data);
@@ -929,6 +940,8 @@ const ChatRoom: React.FC = () => {
       const fileUrl = res.data;
       console.log('文件上传地址：', fileUrl);
       setPendingFileUrl(fileUrl);
+      // 更新发送按钮状态
+      setShouldShowSendButton(true);
 
       messageApi.success('文件上传成功');
     } catch (error) {
@@ -941,6 +954,8 @@ const ChatRoom: React.FC = () => {
   // 移除待发送的文件
   const handleRemoveFile = () => {
     setPendingFileUrl(null);
+    // 更新发送按钮状态
+    setShouldShowSendButton(shouldShowSendButtonCheck());
   };
 
   // 添加滚动到指定消息的函数
@@ -1224,6 +1239,9 @@ const ChatRoom: React.FC = () => {
     setPendingFileUrl(null);
     setQuotedMessage(null);
 
+    // 重置发送按钮状态为加号按钮
+    setShouldShowSendButton(false);
+
     // 更新最后发送时间和内容
     setLastSendTime(now);
     setLastSendContent(content);
@@ -1239,6 +1257,8 @@ const ChatRoom: React.FC = () => {
   // 移除待发送的图片
   const handleRemoveImage = () => {
     setPendingImageUrl(null);
+    // 更新发送按钮状态
+    setShouldShowSendButton(shouldShowSendButtonCheck());
   };
 
   // 添加撤回消息的处理函数
@@ -1265,12 +1285,8 @@ const ChatRoom: React.FC = () => {
     // 更新输入值
     setInputValue(value);
 
-    // 更新是否显示发送按钮的状态
-    const hasContent = value.trim().length > 0;
-    setShouldShowSendButton(hasContent);
-
     // 如果输入框有内容并且功能面板显示中，则关闭功能面板
-    if (hasContent && isMobileToolbarVisible) {
+    if (value.trim().length > 0 && isMobileToolbarVisible) {
       closeMobileToolbar();
     }
 
@@ -2125,6 +2141,8 @@ const ChatRoom: React.FC = () => {
       const data = await response.json();
       if (data.success) {
         setPendingImageUrl(data.url);
+        // 更新发送按钮状态
+        setShouldShowSendButton(true);
       } else {
         messageApi.error('获取摸鱼日历失败');
       }
@@ -2504,6 +2522,16 @@ const ChatRoom: React.FC = () => {
     setIsMobileToolbarVisible(!isMobileToolbarVisible);
   };
 
+  // 检查是否应该显示发送按钮
+  const shouldShowSendButtonCheck = () => {
+    return inputValue.trim().length > 0 || pendingImageUrl !== null || pendingFileUrl !== null;
+  };
+
+  // 确保在组件状态更新时检查发送按钮状态
+  useEffect(() => {
+    setShouldShowSendButton(shouldShowSendButtonCheck());
+  }, [inputValue, pendingImageUrl, pendingFileUrl]);
+
   // 处理移动端功能按钮点击
   const handleMobileToolClick = (action: string) => {
     switch (action) {
@@ -2539,21 +2567,50 @@ const ChatRoom: React.FC = () => {
     }
   };
 
+  // 处理谁是卧底按钮点击
+  const handleRoomInfoClick = () => {
+    // 点击后清除通知状态
+    setUndercoverNotification(UNDERCOVER_NOTIFICATION.NONE);
+    setIsRoomInfoVisible(true);
+  };
+
+  // 添加处理来自eventBus的显示谁是卧底房间事件
+  useEffect(() => {
+    const handleShowUndercoverRoom = () => {
+      setIsRoomInfoVisible(true);
+    };
+
+    eventBus.on('show_undercover_room', handleShowUndercoverRoom);
+
+    return () => {
+      eventBus.off('show_undercover_room', handleShowUndercoverRoom);
+    };
+  }, []);
+
+  // 添加WebSocket消息处理器来监听房间创建事件
+  useEffect(() => {
+    const handleRefreshRoomMessage = (data: any) => {
+      if (data?.data?.content?.action === 'create') {
+        // 新房间创建，显示小红点通知
+        setUndercoverNotification(UNDERCOVER_NOTIFICATION.NEW_ROOM);
+      }
+    };
+
+    wsService.addMessageHandler('refreshRoom', handleRefreshRoomMessage);
+
+    return () => {
+      wsService.removeMessageHandler('refreshRoom', handleRefreshRoomMessage);
+    };
+  }, []);
+
   return (
     <div className={styles.chatRoom}>
       {/* 房间信息卡片 */}
-      <RoomInfoCard visible={isRoomInfoVisible} onClose={() => setIsRoomInfoVisible(false)} />
-      
-      {/* 添加一个切换按钮 */}
-      <Button
-        type="primary"
-        shape="circle"
-        icon={<TeamOutlined />}
-        className={styles.roomInfoButton}
-        onClick={() => setIsRoomInfoVisible(!isRoomInfoVisible)}
-        title="查看你画我猜房间"
+      <RoomInfoCard
+        visible={isRoomInfoVisible}
+        onClose={() => setIsRoomInfoVisible(false)}
       />
-      
+
       {currentMusic && (
         <div className={styles.musicFloatingPlayer}>
           <img src={currentMusic.cover} alt="cover" className={styles.musicCover} />
@@ -2845,19 +2902,45 @@ const ChatRoom: React.FC = () => {
           >
             <Button icon={<PictureOutlined />} className={styles.emoticonButton} />
           </Popover>
-          <Button
-            icon={<CustomerServiceOutlined />}
-            className={styles.musicButton}
-            onClick={() => setIsMusicSearchVisible(true)}
-          />
-          {(currentUser?.userRole === 'admin' || (currentUser?.level && currentUser.level >= 6)) && (
-            <Button
-              icon={<GiftOutlined />}
-              className={styles.redPacketButton}
-              onClick={() => setIsRedPacketModalVisible(true)}
-            />
-          )}
-
+          {/* 谁是卧底按钮 */}
+          <Popover content="谁是卧底" placement="top">
+            <Badge dot={undercoverNotification === UNDERCOVER_NOTIFICATION.NEW_ROOM} className={styles.roomInfoBadge}>
+              <Button
+                icon={<TeamOutlined />}
+                className={`${styles.roomInfoButton} ${styles.hideOnMobile}`}
+                onClick={handleRoomInfoClick}
+              />
+            </Badge>
+          </Popover>
+          <Popover
+            content={
+              <div className={styles.moreOptionsMenu}>
+                <div className={styles.moreOptionsItem} onClick={() => setIsMusicSearchVisible(true)}>
+                  <CustomerServiceOutlined className={styles.moreOptionsIcon} />
+                  <span>点歌</span>
+                </div>
+                {(currentUser?.userRole === 'admin' || (currentUser?.level && currentUser.level >= 6)) && (
+                  <div className={styles.moreOptionsItem} onClick={() => setIsRedPacketModalVisible(true)}>
+                    <GiftOutlined className={styles.moreOptionsIcon} />
+                    <span>发红包</span>
+                  </div>
+                )}
+                <div className={styles.moreOptionsItem} onClick={fetchMoyuCalendar}>
+                  <CalendarOutlined className={styles.moreOptionsIcon} />
+                  <span>摸鱼日历</span>
+                </div>
+                <div className={styles.moreOptionsItem} onClick={() => fileInputRef.current?.click()}>
+                  <PaperClipOutlined className={styles.moreOptionsIcon} />
+                  <span>上传图片</span>
+                </div>
+              </div>
+            }
+            trigger="click"
+            placement="top"
+            overlayClassName={styles.moreOptionsPopover}
+          >
+            <Button icon={<EllipsisOutlined />} className={`${styles.moreOptionsButton} ${styles.hideOnMobile}`} />
+          </Popover>
           <Input.TextArea
             ref={inputRef}
             value={inputValue}

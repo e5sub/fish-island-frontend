@@ -1061,17 +1061,23 @@
     }
   }
 
-  .roomInfoButton {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 999;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
+  .moreOptionsButton {
+    margin-right: 8px;
+    transition: all 0.3s;
     
     &:hover {
-      transform: scale(1.1);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      color: #1890ff;
+      background-color: #f0f5ff;
+    }
+  }
+
+  .roomInfoButton {
+    margin-right: 8px;
+    transition: all 0.3s;
+    
+    &:hover {
+      color: #1890ff;
+      background-color: #f0f5ff;
     }
   }
 }
@@ -2747,4 +2753,74 @@
 @keyframes lanternGlow {
   0% { text-shadow: 0 0 5px rgba(255, 99, 71, 0.5); }
   100% { text-shadow: 0 0 10px rgba(255, 99, 71, 0.8), 0 0 15px rgba(255, 99, 71, 0.5); }
+}
+
+// 添加更多选项菜单样式
+.moreOptionsMenu {
+  width: 180px;
+  padding: 8px 0;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.moreOptionsItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-radius: 4px;
+  margin: 0 8px;
+  
+  &:hover {
+    background-color: #f5f5f5;
+    color: #1890ff;
+  }
+  
+  .moreOptionsIcon {
+    margin-right: 12px;
+    font-size: 18px;
+    color: #1890ff;
+  }
+}
+
+.moreOptionsPopover {
+  :global(.ant-popover-inner) {
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  :global(.ant-popover-inner-content) {
+    padding: 4px;
+  }
+  
+  :global(.ant-popover-arrow) {
+    display: none;
+  }
+}
+
+.moreOptionsButton {
+  margin-right: 8px;
+  transition: all 0.3s;
+  
+  &:hover {
+    color: #1890ff;
+    background-color: #f0f5ff;
+  }
+}
+
+.roomInfoButton {
+  color: #1890ff;
+}
+
+.roomInfoBadge {
+  margin-right: 8px;
+}
+
+// 添加移动端隐藏元素的类
+.hideOnMobile {
+  @media screen and (max-width: 768px) {
+    display: none !important;
+  }
 }
