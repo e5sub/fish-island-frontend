@@ -15,7 +15,7 @@ export async function addPostUsingPost(body: API.PostAddRequest, options?: { [ke
 }
 
 /** 删除帖子 POST /api/post/delete */
-export async function deletePostUsingPost(
+export async function deletePostUsingPost1(
   body: API.DeleteRequest,
   options?: { [key: string]: any },
 ) {
@@ -95,21 +95,6 @@ export async function listMyPostVoByPageUsingPost(
   options?: { [key: string]: any },
 ) {
   return request<API.BaseResponsePagePostVO_>('/api/post/my/list/page/vo', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
-/** 分页搜索（从 ES 查询，封装类） POST /api/post/search/page/vo */
-export async function searchPostVoByPageUsingPost(
-  body: API.PostQueryRequest,
-  options?: { [key: string]: any },
-) {
-  return request<API.BaseResponsePagePostVO_>('/api/post/search/page/vo', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

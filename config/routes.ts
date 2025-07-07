@@ -9,6 +9,10 @@ export default [
   {path: '/home', layout: false, icon: 'smile', component: './Home', name: '浏览器页面', requireAuth: false},
   {path: '/todo', icon: 'CalendarOutlined', component: './TODO', name: '每日待办', requireAuth: true},
   {path: '/chat', icon: 'MessageOutlined', component: './Chat', name: '摸鱼室', requireAuth: true},
+  {path: '/post', icon: 'InstagramOutlined', component: './Post', name: '摸鱼论坛', requireAuth: true},
+  {path: '/post/create', layout: false, icon: 'EditOutlined', component: './Post/Create', requireAuth: true},
+  {path: '/post/edit/:id', layout: false, component: './Post/Edit', requireAuth: true},
+  {path: '/post/:id',component: './Post/Detail', requireAuth: true},
   {path: '/reader', icon: 'BookOutlined', component: './Reader', name: '摸鱼阅读', requireAuth: true},
   // { path: '/draw', icon: 'MessageOutlined', component: './Draw', name: '你画我猜', requireAuth: true },
   {
@@ -28,10 +32,34 @@ export default [
         requireAuth: true
       },
       {icon: 'DesktopOutlined', path: '/game/2048', component: './Game/2048', name: '2048', requireAuth: false},
-      {icon: 'DesktopOutlined', path: '/game/guessHero', component: './Game/GuessHero', name: '英雄猜猜乐', requireAuth: false},
-      {icon: 'DesktopOutlined', path: '/game/chicken', component: './Game/Chicken', name: '🐔鸡了个鸡🐔', requireAuth: false},
-      {icon: 'DesktopOutlined', path: '/game/life', component: './Game/Life', name: ' 人生重开模拟器', requireAuth: false},
-      {icon: 'DesktopOutlined', path: '/game/darkRoom', component: './Game/DarkRoom', name: ' 小黑屋模拟器', requireAuth: false},
+      {
+        icon: 'DesktopOutlined',
+        path: '/game/guessHero',
+        component: './Game/GuessHero',
+        name: '英雄猜猜乐',
+        requireAuth: false
+      },
+      {
+        icon: 'DesktopOutlined',
+        path: '/game/chicken',
+        component: './Game/Chicken',
+        name: '🐔鸡了个鸡🐔',
+        requireAuth: false
+      },
+      {
+        icon: 'DesktopOutlined',
+        path: '/game/life',
+        component: './Game/Life',
+        name: ' 人生重开模拟器',
+        requireAuth: false
+      },
+      {
+        icon: 'DesktopOutlined',
+        path: '/game/darkRoom',
+        component: './Game/DarkRoom',
+        name: ' 小黑屋模拟器',
+        requireAuth: false
+      },
       {icon: 'DesktopOutlined', path: '/game/car', component: './Game/Car', name: '模拟赛车', requireAuth: false},
       {icon: 'DesktopOutlined', path: '/game/jump', component: './Game/Jump', name: '跳一跳   ', requireAuth: false},
       {

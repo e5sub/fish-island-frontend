@@ -86,6 +86,24 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseListUndercoverPlayerDetailVO_ = {
+    code?: number;
+    data?: UndercoverPlayerDetailVO[];
+    message?: string;
+  };
+
+  type BaseResponseListUndercoverRoomVO_ = {
+    code?: number;
+    data?: UndercoverRoomVO[];
+    message?: string;
+  };
+
+  type BaseResponseListUndercoverVoteVO_ = {
+    code?: number;
+    data?: UndercoverVoteVO[];
+    message?: string;
+  };
+
   type BaseResponseListUserChatResponse_ = {
     code?: number;
     data?: UserChatResponse[];
@@ -125,6 +143,18 @@ declare namespace API {
   type BaseResponsePageAvatarFrameVO_ = {
     code?: number;
     data?: PageAvatarFrameVO_;
+    message?: string;
+  };
+
+  type BaseResponsePageCommentNodeVO_ = {
+    code?: number;
+    data?: PageCommentNodeVO_;
+    message?: string;
+  };
+
+  type BaseResponsePageCommentVO_ = {
+    code?: number;
+    data?: PageCommentVO_;
     message?: string;
   };
 
@@ -170,6 +200,18 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponsePageTags_ = {
+    code?: number;
+    data?: PageTags_;
+    message?: string;
+  };
+
+  type BaseResponsePageTagsVO_ = {
+    code?: number;
+    data?: PageTagsVO_;
+    message?: string;
+  };
+
   type BaseResponsePageUser_ = {
     code?: number;
     data?: PageUser_;
@@ -200,9 +242,33 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseTagsVO_ = {
+    code?: number;
+    data?: TagsVO;
+    message?: string;
+  };
+
   type BaseResponseTokenLoginUserVo_ = {
     code?: number;
     data?: TokenLoginUserVo;
+    message?: string;
+  };
+
+  type BaseResponseUndercoverPlayerDetailVO_ = {
+    code?: number;
+    data?: UndercoverPlayerDetailVO;
+    message?: string;
+  };
+
+  type BaseResponseUndercoverPlayerVO_ = {
+    code?: number;
+    data?: UndercoverPlayerVO;
+    message?: string;
+  };
+
+  type BaseResponseUndercoverRoomVO_ = {
+    code?: number;
+    data?: UndercoverRoomVO;
     message?: string;
   };
 
@@ -291,6 +357,57 @@ declare namespace API {
     source: string;
   };
 
+  type ChildCommentQueryRequest = {
+    current?: number;
+    pageSize?: number;
+    rootId?: number;
+    sortField?: string;
+    sortOrder?: string;
+  };
+
+  type CommentAddRequest = {
+    content?: string;
+    parentId?: number;
+    postId?: number;
+    rootId?: number;
+  };
+
+  type CommentNodeVO = {
+    childCount?: number;
+    content?: string;
+    createTime?: string;
+    id?: number;
+    parentId?: number;
+    postId?: number;
+    previewChildren?: CommentVO[];
+    thumbNum?: number;
+    user?: UserVO;
+    userId?: number;
+  };
+
+  type CommentQueryRequest = {
+    current?: number;
+    pageSize?: number;
+    postId?: number;
+    sortField?: string;
+    sortOrder?: string;
+  };
+
+  type CommentThumbAddRequest = {
+    commentId?: number;
+  };
+
+  type CommentVO = {
+    content?: string;
+    createTime?: string;
+    id?: number;
+    parentId?: number;
+    postId?: number;
+    thumbNum?: number;
+    user?: UserVO;
+    userId?: number;
+  };
+
   type CosCredentialVo = {
     /** 桶名称 */
     bucket?: string;
@@ -319,7 +436,7 @@ declare namespace API {
   };
 
   type DeleteRequest = {
-    id?: number;
+    id?: string;
   };
 
   type DonationRecords = {
@@ -368,12 +485,24 @@ declare namespace API {
     userId?: number;
   };
 
+  type eliminatePlayerUsingPOSTParams = {
+    /** roomId */
+    roomId: string;
+    /** userId */
+    userId: number;
+  };
+
   type EmoticonFavour = {
     createTime?: string;
     emoticonSrc?: string;
     id?: number;
     updateTime?: string;
     userId?: number;
+  };
+
+  type endGameUsingPOSTParams = {
+    /** roomId */
+    roomId: string;
   };
 
   type exchangeFrameUsingPOSTParams = {
@@ -393,6 +522,11 @@ declare namespace API {
   type getCosCredentialUsingGETParams = {
     /** fileName */
     fileName?: string;
+  };
+
+  type getCurrentPlayerInfoUsingGETParams = {
+    /** roomId */
+    roomId: string;
   };
 
   type getDonationRecordsVoByIdUsingGETParams = {
@@ -415,6 +549,20 @@ declare namespace API {
     id?: number;
   };
 
+  type getPlayerDetailInfoUsingGETParams = {
+    /** roomId */
+    roomId: string;
+    /** userId */
+    userId: number;
+  };
+
+  type getPlayerInfoUsingGETParams = {
+    /** roomId */
+    roomId: string;
+    /** userId */
+    userId: number;
+  };
+
   type getPostVoByIdUsingGETParams = {
     /** id */
     id?: number;
@@ -428,6 +576,26 @@ declare namespace API {
   type getRedPacketRecordsUsingGETParams = {
     /** 红包ID */
     redPacketId: string;
+  };
+
+  type getRoomByIdUsingGETParams = {
+    /** roomId */
+    roomId?: string;
+  };
+
+  type getRoomPlayersDetailUsingGETParams = {
+    /** roomId */
+    roomId: string;
+  };
+
+  type getRoomVotesUsingGETParams = {
+    /** roomId */
+    roomId: string;
+  };
+
+  type getTagsVOByIdUsingGETParams = {
+    /** id */
+    id?: number;
   };
 
   type getUserByIdUsingGETParams = {
@@ -522,6 +690,7 @@ declare namespace API {
     id?: string;
     mentionedUsers?: Sender[];
     quotedMessage?: Message;
+    roomId?: string;
     sender?: Sender;
     timestamp?: string;
   };
@@ -683,6 +852,32 @@ declare namespace API {
     total?: number;
   };
 
+  type PageCommentNodeVO_ = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: CommentNodeVO[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
+  type PageCommentVO_ = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: CommentVO[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
   type PageDonationRecords_ = {
     countId?: string;
     current?: number;
@@ -781,6 +976,32 @@ declare namespace API {
     total?: number;
   };
 
+  type PageTags_ = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: Tags[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
+  type PageTagsVO_ = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: TagsVO[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
   type PageUser_ = {
     countId?: string;
     current?: number;
@@ -820,26 +1041,31 @@ declare namespace API {
 
   type Post = {
     content?: string;
+    coverImage?: string;
     createTime?: string;
     favourNum?: number;
     id?: number;
     isDelete?: number;
+    isFeatured?: number;
     tags?: string;
     thumbNum?: number;
     title?: string;
     updateTime?: string;
     userId?: number;
+    viewNum?: number;
   };
 
   type PostAddRequest = {
     content?: string;
+    coverImage?: string;
     tags?: string[];
     title?: string;
   };
 
   type PostEditRequest = {
     content?: string;
-    id?: number;
+    coverImage?: string;
+    id?: string;
     tags?: string[];
     title?: string;
   };
@@ -860,10 +1086,7 @@ declare namespace API {
   type PostQueryRequest = {
     content?: string;
     current?: number;
-    favourUserId?: number;
-    id?: number;
-    notId?: number;
-    orTags?: string[];
+    isFeatured?: number;
     pageSize?: number;
     searchText?: string;
     sortField?: string;
@@ -879,24 +1102,30 @@ declare namespace API {
 
   type PostUpdateRequest = {
     content?: string;
-    id?: number;
+    coverImage?: string;
+    id?: string;
     tags?: string[];
     title?: string;
   };
 
   type PostVO = {
+    commentNum?: number;
     content?: string;
+    coverImage?: string;
     createTime?: string;
     favourNum?: number;
     hasFavour?: boolean;
     hasThumb?: boolean;
     id?: number;
+    isFeatured?: number;
+    latestComment?: CommentVO;
     tagList?: string[];
     thumbNum?: number;
     title?: string;
     updateTime?: string;
     user?: UserVO;
     userId?: number;
+    viewNum?: number;
   };
 
   type recordGuessSuccessUsingPOSTParams = {
@@ -920,6 +1149,11 @@ declare namespace API {
     status?: number;
     totalAmount?: number;
     type?: number;
+  };
+
+  type removeActiveRoomUsingPOSTParams = {
+    /** roomId */
+    roomId?: string;
   };
 
   type renderAuthUsingGETParams = {
@@ -994,9 +1228,49 @@ declare namespace API {
     id?: number;
   };
 
+  type startGameUsingPOSTParams = {
+    /** roomId */
+    roomId: string;
+  };
+
   type streamChatDemoUsingGETParams = {
     /** prompt */
     prompt: string;
+  };
+
+  type Tags = {
+    createTime?: string;
+    id?: number;
+    isDelete?: number;
+    tagsName?: string;
+    type?: number;
+    updateTime?: string;
+  };
+
+  type TagsAddRequest = {
+    tagsName?: string;
+  };
+
+  type TagsQueryRequest = {
+    current?: number;
+    id?: number;
+    pageSize?: number;
+    sortField?: string;
+    sortOrder?: string;
+    tagsName?: string;
+    type?: number;
+  };
+
+  type TagsUpdateRequest = {
+    id?: number;
+    tagsName?: string;
+    type?: number;
+  };
+
+  type TagsVO = {
+    id?: number;
+    tagsName?: string;
+    type?: number;
   };
 
   type TokenLoginUserVo = {
@@ -1022,6 +1296,88 @@ declare namespace API {
   type unbindUsingDELETEParams = {
     /** source */
     source: string;
+  };
+
+  type UndercoverGuessRequest = {
+    guessWord?: string;
+    roomId?: string;
+  };
+
+  type UndercoverPlayerDetailVO = {
+    guessCount?: number;
+    isEliminated?: boolean;
+    remainingGuessCount?: number;
+    userAvatar?: string;
+    userId?: number;
+    userName?: string;
+    voteCount?: number;
+  };
+
+  type UndercoverPlayerVO = {
+    guessCount?: number;
+    isEliminated?: boolean;
+    remainingGuessCount?: number;
+    role?: string;
+    userId?: number;
+    word?: string;
+  };
+
+  type UndercoverRoomCreateRequest = {
+    /** 平民词 */
+    civilianWord?: string;
+    /** 持续时间秒 */
+    duration?: number;
+    /** 游戏模式：1-常规模式(默认)，2-卧底猜词模式 */
+    gameMode?: number;
+    /** 房间最大人数 */
+    maxPlayers?: number;
+    /** 卧底词 */
+    undercoverWord?: string;
+  };
+
+  type UndercoverRoomJoinRequest = {
+    roomId?: string;
+  };
+
+  type UndercoverRoomQuitRequest = {
+    roomId?: string;
+  };
+
+  type UndercoverRoomVO = {
+    createTime?: string;
+    creatorAvatar?: string;
+    creatorId?: number;
+    creatorName?: string;
+    duration?: number;
+    eliminatedIds?: number[];
+    gameMode?: number;
+    gameResult?: string;
+    maxPlayers?: number;
+    orderedParticipantIds?: number[];
+    participantIds?: number[];
+    participants?: UndercoverPlayerDetailVO[];
+    remainingTime?: number;
+    role?: string;
+    roomId?: string;
+    startTime?: string;
+    status?: 'WAITING' | 'PLAYING' | 'ENDED';
+    votes?: UndercoverVoteVO[];
+    word?: string;
+  };
+
+  type UndercoverVoteRequest = {
+    roomId?: string;
+    targetId?: number;
+  };
+
+  type UndercoverVoteVO = {
+    targetAvatar?: string;
+    targetId?: number;
+    targetName?: string;
+    voteTime?: string;
+    voterAvatar?: string;
+    voterId?: number;
+    voterName?: string;
   };
 
   type unmuteUserUsingPOSTParams = {

@@ -14,6 +14,8 @@ import {
   StarOutlined,
   UpOutlined,
   DownOutlined,
+  TeamOutlined,
+  UserAddOutlined
 } from '@ant-design/icons';
 import { useModel } from '@umijs/max';
 import { Button, Card, Image, message } from 'antd';
@@ -65,6 +67,8 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
   const imgRegex = new RegExp('\\[img\\](.*?)\\[/img\\]', 'g');
   // 文件标签匹配正则表达式
   const fileRegex = new RegExp('\\[file\\](.*?)\\[/file\\]', 'g');
+  // 谁是卧底邀请标签匹配正则表达式
+  const undercoverRegex = new RegExp('<undercover>(.*?)</undercover>', 'g');
   // 添加折叠状态管理
   const [collapsedImages, setCollapsedImages] = useState<Set<string>>(new Set());
 
@@ -235,8 +239,8 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
 
     if (isHidden) {
       return (
-        <div 
-          key={key} 
+        <div
+          key={key}
           className={styles.imageText}
           onClick={() => {
             setShownImages(prev => new Set([...prev, url]));
@@ -249,8 +253,8 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
 
     if (isCollapsed) {
       return (
-        <div 
-          key={key} 
+        <div
+          key={key}
           className={styles.imageText}
           onClick={() => {
             setCollapsedImages(prev => {
@@ -539,6 +543,46 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
     );
   };
 
+  // 渲染谁是卧底邀请
+  const renderUndercoverInvite = (content: string, key: string) => {
+    // 提取房间ID但不在UI中显示
+    const roomIdMatch = content.match(/房间ID: ([a-zA-Z0-9]+)/);
+    const roomId = roomIdMatch ? roomIdMatch[1] : '';
+
+    // 提取邀请文本，去掉房间ID部分
+    const inviteText = content.replace(/房间ID: [a-zA-Z0-9]+/, '').trim();
+
+    return (
+      <Card key={key} className={styles.inviteCard} size="small" hoverable>
+        <div className={styles.inviteContent}>
+          <TeamOutlined className={styles.inviteIcon} />
+          <div className={styles.inviteInfo}>
+            <div className={styles.inviteTitle}>谁是卧底游戏</div>
+            <div className={styles.inviteDescription}>{inviteText}</div>
+            <Button
+              type="primary"
+              size="small"
+              icon={<UserAddOutlined />}
+              onClick={() => {
+                if (roomId) {
+                  // 添加日志，帮助调试
+                  console.log('触发加入谁是卧底房间事件，房间ID:', roomId);
+                  // 确保roomId是字符串类型
+                  eventBus.emit('join_undercover_room', String(roomId));
+                } else {
+                  message.error('无效的邀请');
+                }
+              }}
+              className={styles.joinButton}
+            >
+              加入游戏
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
   // 添加安全的 HTML 渲染函数
   const sanitizeHtml = (html: string) => {
     return DOMPurify.sanitize(html, {
@@ -754,53 +798,107 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
     let lastIndex = 0;
     let match: RegExpExecArray | null;
 
-    // 处理图片标签
-    while ((match = imgRegex.exec(content)) !== null) {
-      // 添加图片前的文本
+    // 处理谁是卧底邀请标签
+    while ((match = undercoverRegex.exec(content)) !== null) {
+      // 添加邀请前的文本
       if (match.index > lastIndex) {
-        const textBeforeImg = content.slice(lastIndex, match.index);
-        // 处理文本中的URL
-        const urlParts = textBeforeImg.split(urlRegex);
-        urlParts.forEach((urlPart, urlIndex) => {
-          if (urlPart.match(urlRegex)) {
-            parts.push(renderUrl(urlPart, `url-${match!.index}-${urlIndex}`));
-          } else if (urlPart) {
-            parts.push(
-              <ReactMarkdown
-                key={`markdown-${match!.index}-${urlIndex}`}
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw, rehypePrism]}
-                components={markdownComponents}
-              >
-                {sanitizeHtml(urlPart)}
-              </ReactMarkdown>,
-            );
-          }
-        });
+        const textBeforeInvite = content.slice(lastIndex, match.index);
+        parts.push(
+          <ReactMarkdown
+            key={`markdown-before-invite-${match.index}`}
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw, rehypePrism]}
+            components={markdownComponents}
+          >
+            {sanitizeHtml(textBeforeInvite)}
+          </ReactMarkdown>
+        );
       }
-      // 添加图片组件,传入 onImageLoad 回调
-      parts.push(renderImage(match[1], `img-${match.index}`));
+      // 添加谁是卧底邀请组件
+      parts.push(renderUndercoverInvite(match[1], `undercover-${match.index}`));
       lastIndex = match.index + match[0].length;
     }
 
-    // 处理文件标签
-    const remainingContent = content.slice(lastIndex);
-    let fileLastIndex = 0;
-    let fileMatch: RegExpExecArray | null;
+    // 如果没有谁是卧底邀请标签，或者处理完邀请标签后还有剩余内容，继续处理其他标签
+    if (lastIndex === 0 || lastIndex < content.length) {
+      const remainingContent = content.slice(lastIndex);
 
-    while ((fileMatch = fileRegex.exec(remainingContent)) !== null) {
-      // 处理文件前的文本（包括URL解析）
-      if (fileMatch.index > fileLastIndex) {
-        const textBeforeFile = remainingContent.slice(fileLastIndex, fileMatch.index);
-        // 处理文本中的URL
-        const urlParts = textBeforeFile.split(urlRegex);
+      // 重置lastIndex用于处理图片标签
+      lastIndex = 0;
+
+      // 处理图片标签
+      while ((match = imgRegex.exec(remainingContent)) !== null) {
+        // 添加图片前的文本
+        if (match.index > lastIndex) {
+          const textBeforeImg = remainingContent.slice(lastIndex, match.index);
+          // 处理文本中的URL
+          const urlParts = textBeforeImg.split(urlRegex);
+          urlParts.forEach((urlPart, urlIndex) => {
+            if (urlPart.match(urlRegex)) {
+              parts.push(renderUrl(urlPart, `url-${match!.index}-${urlIndex}`));
+            } else if (urlPart) {
+              parts.push(
+                <ReactMarkdown
+                  key={`markdown-${match!.index}-${urlIndex}`}
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw, rehypePrism]}
+                  components={markdownComponents}
+                >
+                  {sanitizeHtml(urlPart)}
+                </ReactMarkdown>,
+              );
+            }
+          });
+        }
+        // 添加图片组件,传入 onImageLoad 回调
+        parts.push(renderImage(match[1], `img-${match.index}`));
+        lastIndex = match.index + match[0].length;
+      }
+
+      // 处理文件标签
+      const imgProcessedContent = remainingContent.slice(lastIndex);
+      let fileLastIndex = 0;
+      let fileMatch: RegExpExecArray | null;
+
+      while ((fileMatch = fileRegex.exec(imgProcessedContent)) !== null) {
+        // 处理文件前的文本（包括URL解析）
+        if (fileMatch.index > fileLastIndex) {
+          const textBeforeFile = imgProcessedContent.slice(fileLastIndex, fileMatch.index);
+          // 处理文本中的URL
+          const urlParts = textBeforeFile.split(urlRegex);
+          urlParts.forEach((urlPart, urlIndex) => {
+            if (urlPart.match(urlRegex)) {
+              parts.push(renderUrl(urlPart, `url-file-${fileMatch!.index}-${urlIndex}`));
+            } else if (urlPart) {
+              parts.push(
+                <ReactMarkdown
+                  key={`markdown-file-${fileMatch!.index}-${urlIndex}`}
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw, rehypePrism]}
+                  components={markdownComponents}
+                >
+                  {sanitizeHtml(urlPart)}
+                </ReactMarkdown>,
+              );
+            }
+          });
+        }
+        // 添加文件组件
+        parts.push(renderFile(fileMatch[1], `file-${fileMatch.index}`));
+        fileLastIndex = fileMatch.index + fileMatch[0].length;
+      }
+
+      // 处理剩余文本中的URL
+      if (fileLastIndex < imgProcessedContent.length) {
+        const finalText = imgProcessedContent.slice(fileLastIndex);
+        const urlParts = finalText.split(urlRegex);
         urlParts.forEach((urlPart, urlIndex) => {
           if (urlPart.match(urlRegex)) {
-            parts.push(renderUrl(urlPart, `url-file-${fileMatch!.index}-${urlIndex}`));
+            parts.push(renderUrl(urlPart, `url-final-${urlIndex}`));
           } else if (urlPart) {
             parts.push(
               <ReactMarkdown
-                key={`markdown-file-${fileMatch!.index}-${urlIndex}`}
+                key={`markdown-final-${urlIndex}`}
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeRaw, rehypePrism]}
                 components={markdownComponents}
@@ -811,31 +909,6 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
           }
         });
       }
-      // 添加文件组件
-      parts.push(renderFile(fileMatch[1], `file-${fileMatch.index}`));
-      fileLastIndex = fileMatch.index + fileMatch[0].length;
-    }
-
-    // 处理剩余文本中的URL
-    if (fileLastIndex < remainingContent.length) {
-      const finalText = remainingContent.slice(fileLastIndex);
-      const urlParts = finalText.split(urlRegex);
-      urlParts.forEach((urlPart, urlIndex) => {
-        if (urlPart.match(urlRegex)) {
-          parts.push(renderUrl(urlPart, `url-final-${urlIndex}`));
-        } else if (urlPart) {
-          parts.push(
-            <ReactMarkdown
-              key={`markdown-final-${urlIndex}`}
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw, rehypePrism]}
-              components={markdownComponents}
-            >
-              {sanitizeHtml(urlPart)}
-            </ReactMarkdown>,
-          );
-        }
-      });
     }
 
     return parts;

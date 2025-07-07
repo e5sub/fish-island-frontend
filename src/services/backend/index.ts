@@ -4,6 +4,8 @@
 // API 唯一标识：
 import * as avatarFrameController from './avatarFrameController';
 import * as chatController from './chatController';
+import * as commentController from './commentController';
+import * as commentThumbController from './commentThumbController';
 import * as donationRecordsController from './donationRecordsController';
 import * as emoticonFavourController from './emoticonFavourController';
 import * as fileController from './fileController';
@@ -15,7 +17,9 @@ import * as postFavourController from './postFavourController';
 import * as postThumbController from './postThumbController';
 import * as redPacketController from './redPacketController';
 import * as restAuthController from './restAuthController';
+import * as tagsController from './tagsController';
 import * as todoController from './todoController';
+import * as undercoverGameController from './undercoverGameController';
 import * as userController from './userController';
 import * as userMuteController from './userMuteController';
 import * as userTitleController from './userTitleController';
@@ -24,6 +28,8 @@ export default {
   avatarFrameController,
   webParserController,
   chatController,
+  commentController,
+  commentThumbController,
   donationRecordsController,
   emoticonFavourController,
   fileController,
@@ -35,7 +41,9 @@ export default {
   postFavourController,
   postThumbController,
   redPacketController,
+  tagsController,
   todoController,
+  undercoverGameController,
   userController,
   userMuteController,
   userTitleController,

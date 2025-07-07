@@ -1060,6 +1060,26 @@
       }
     }
   }
+
+  .moreOptionsButton {
+    margin-right: 8px;
+    transition: all 0.3s;
+    
+    &:hover {
+      color: #1890ff;
+      background-color: #f0f5ff;
+    }
+  }
+
+  .roomInfoButton {
+    margin-right: 8px;
+    transition: all 0.3s;
+    
+    &:hover {
+      color: #1890ff;
+      background-color: #f0f5ff;
+    }
+  }
 }
 
 .emojiPicker {
@@ -1189,7 +1209,7 @@
     animation: flowingGold 6s ease infinite, goldShine 2s ease-in-out infinite;
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
     border: 1px solid rgba(255, 215, 0, 0.5);
-    
+
     .adminText {
       background: linear-gradient(to right, #fff, #ffd700, #fff);
       -webkit-background-clip: text;
@@ -1197,7 +1217,7 @@
       text-shadow: none;
       font-weight: 700;
     }
-    
+
     // 添加三叉戟特效
     &::before {
       content: '';
@@ -1211,14 +1231,14 @@
       animation: pulse 3s ease-in-out infinite alternate;
     }
   }
-  
+
   &.levelTagCelestial {
     background: linear-gradient(135deg, #800080, #9400d3, #8a2be2, #9370db);
     background-size: 300% 300%;
     animation: flowingPurple 8s ease infinite;
     box-shadow: 0 0 12px rgba(148, 0, 211, 0.6);
     border: 1px solid rgba(138, 43, 226, 0.5);
-    
+
     &::after {
       content: '✨';
       position: absolute;
@@ -1227,7 +1247,7 @@
       font-size: 10px;
       animation: twinkle 3s infinite alternate;
     }
-    
+
     // 闪烁星星效果
     .adminText::before {
       content: '✨';
@@ -1239,14 +1259,14 @@
       animation: floatStars 4s ease-in-out infinite;
     }
   }
-  
+
   &.levelTagSaint {
     background: linear-gradient(135deg, #00bfff, #1e90ff, #4169e1, #0000ff);
     background-size: 300% 300%;
     animation: flowingBlue 7s ease infinite;
     box-shadow: 0 0 12px rgba(30, 144, 255, 0.6);
     border: 1px solid rgba(65, 105, 225, 0.5);
-    
+
     &::before {
       content: '';
       position: absolute;
@@ -1258,20 +1278,20 @@
       opacity: 0.4;
       animation: pulse 4s ease-in-out infinite alternate;
     }
-    
+
     // 星星光芒效果
     .adminText {
       text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
     }
   }
-  
+
   &.levelTagImmortal {
     background: linear-gradient(135deg, #20b2aa, #48d1cc, #40e0d0, #7fffd4);
     background-size: 300% 300%;
     animation: flowingTeal 7s ease infinite;
     box-shadow: 0 0 12px rgba(64, 224, 208, 0.6);
     border: 1px solid rgba(127, 255, 212, 0.5);
-    
+
     &::after {
       content: '';
       position: absolute;
@@ -1285,7 +1305,7 @@
       animation: rotate 12s linear infinite;
       pointer-events: none;
     }
-    
+
     // 彩虹效果
     .adminText {
       background: linear-gradient(to right, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
@@ -1295,14 +1315,14 @@
       animation: rainbowText 6s linear infinite;
     }
   }
-  
+
   &.levelTagElder {
     background: linear-gradient(135deg, #ff6347, #ff7f50, #fa8072, #ffa07a);
     background-size: 300% 300%;
     animation: flowingCoral 8s ease infinite;
     box-shadow: 0 0 12px rgba(255, 99, 71, 0.6);
     border: 1px solid rgba(250, 128, 114, 0.5);
-    
+
     &::before {
       content: '';
       position: absolute;
@@ -1318,7 +1338,7 @@
       );
       animation: shine 3s infinite;
     }
-    
+
     // 灯笼发光效果
     .adminText {
       text-shadow: 0 0 5px rgba(255, 99, 71, 0.8);
@@ -1414,8 +1434,8 @@
   }
 
   &.titleTagGold {
-    background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
-    box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+    background: linear-gradient(135deg, #d6caff 0%, #e8d9ff 100%);
+    box-shadow: 0 2px 4px rgba(190, 160, 255, 0.3);
   }
 
   &.titleTagBuilder {
@@ -2733,4 +2753,74 @@
 @keyframes lanternGlow {
   0% { text-shadow: 0 0 5px rgba(255, 99, 71, 0.5); }
   100% { text-shadow: 0 0 10px rgba(255, 99, 71, 0.8), 0 0 15px rgba(255, 99, 71, 0.5); }
+}
+
+// 添加更多选项菜单样式
+.moreOptionsMenu {
+  width: 180px;
+  padding: 8px 0;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.moreOptionsItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-radius: 4px;
+  margin: 0 8px;
+  
+  &:hover {
+    background-color: #f5f5f5;
+    color: #1890ff;
+  }
+  
+  .moreOptionsIcon {
+    margin-right: 12px;
+    font-size: 18px;
+    color: #1890ff;
+  }
+}
+
+.moreOptionsPopover {
+  :global(.ant-popover-inner) {
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  :global(.ant-popover-inner-content) {
+    padding: 4px;
+  }
+  
+  :global(.ant-popover-arrow) {
+    display: none;
+  }
+}
+
+.moreOptionsButton {
+  margin-right: 8px;
+  transition: all 0.3s;
+  
+  &:hover {
+    color: #1890ff;
+    background-color: #f0f5ff;
+  }
+}
+
+.roomInfoButton {
+  color: #1890ff;
+}
+
+.roomInfoBadge {
+  margin-right: 8px;
+}
+
+// 添加移动端隐藏元素的类
+.hideOnMobile {
+  @media screen and (max-width: 768px) {
+    display: none !important;
+  }
 }

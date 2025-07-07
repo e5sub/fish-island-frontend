@@ -456,3 +456,55 @@
   background-color: #cfcfcf;
 }
 
+// 谁是卧底邀请卡片样式
+.inviteCard {
+  margin: 8px 0;
+  max-width: 300px;
+  border: 1px solid #b7eb8f;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  background-color: #f6ffed;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.inviteContent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+}
+
+.inviteIcon {
+  font-size: 16px;
+  color: #52c41a;
+}
+
+.inviteInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inviteTitle {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.inviteDescription {
+  font-size: 12px;
+  color: #666;
+  margin: 2px 0 6px 0;
+}
+
+.joinButton {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
