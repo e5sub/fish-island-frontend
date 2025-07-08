@@ -376,6 +376,7 @@ declare namespace API {
     childCount?: number;
     content?: string;
     createTime?: string;
+    hasThumb?: boolean;
     id?: number;
     parentId?: number;
     postId?: number;
@@ -400,6 +401,7 @@ declare namespace API {
   type CommentVO = {
     content?: string;
     createTime?: string;
+    hasThumb?: boolean;
     id?: number;
     parentId?: number;
     postId?: number;
@@ -1239,15 +1241,21 @@ declare namespace API {
   };
 
   type Tags = {
+    color?: string;
     createTime?: string;
+    icon?: string;
     id?: number;
     isDelete?: number;
+    sort?: number;
     tagsName?: string;
     type?: number;
     updateTime?: string;
   };
 
   type TagsAddRequest = {
+    color?: string;
+    icon?: string;
+    sort?: number;
     tagsName?: string;
   };
 
@@ -1262,13 +1270,19 @@ declare namespace API {
   };
 
   type TagsUpdateRequest = {
+    color?: string;
+    icon?: string;
     id?: number;
+    sort?: number;
     tagsName?: string;
     type?: number;
   };
 
   type TagsVO = {
+    color?: string;
+    icon?: string;
     id?: number;
+    sort?: number;
     tagsName?: string;
     type?: number;
   };

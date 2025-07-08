@@ -149,8 +149,9 @@ export default [
     requireAuth: true,
     routes: [
       {path: '/admin', redirect: '/admin/user', requireAuth: true},
-      {icon: 'table', path: '/admin/user', component: './Admin/User', name: '用户管理', requireAuth: true},
       {icon: 'LineChartOutlined', path: '/admin/data', component: './Admin/Data', name: '数据分析', requireAuth: true},
+      {icon: 'table', path: '/admin/user', component: './Admin/User', name: '用户管理', requireAuth: true},
+      {icon: 'TagsOutlined', path: '/admin/tags', component: './Admin/Tags', name: '标签管理', requireAuth: true},
     ],
   },
   {path: '/', redirect: '/index', requireAuth: true},
