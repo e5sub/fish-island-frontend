@@ -212,6 +212,14 @@ const GuessHero: React.FC = () => {
       onCancel={() => setIsRankingModalVisible(false)}
       className="ranking-modal"
       width={600}
+      footer={[
+        <Button key="close" type="primary" onClick={(e) => {
+          e.stopPropagation(); // 阻止事件冒泡
+          setIsRankingModalVisible(false);
+        }}>
+          我知道了
+        </Button>
+      ]}
     >
       {loadingRanking ? (
         <div className="ranking-loading">
@@ -301,6 +309,14 @@ const GuessHero: React.FC = () => {
       visible={isRuleModalVisible}
       onOk={() => setIsRuleModalVisible(false)}
       onCancel={() => setIsRuleModalVisible(false)}
+      footer={[
+        <Button key="close" type="primary" onClick={(e) => {
+          e.stopPropagation(); // 阻止事件冒泡
+          setIsRuleModalVisible(false);
+        }}>
+          我知道了
+        </Button>
+      ]}
     >
       <div style={{padding: '0 12px'}}>
         <ol>
@@ -339,6 +355,12 @@ const GuessHero: React.FC = () => {
                 <div>名称：<strong>{newHero.cname}</strong></div>
                 <div>上线时间：<strong>{newHero.releaseDate}</strong></div>
               </div>
+              <div>
+                <div>定位：<strong>{typeMap[newHero.primaryType as keyof typeof typeMap] || newHero.primaryType}</strong>
+                </div>
+                <div>种族：<strong>{newHero.race || '无'}</strong></div>
+              </div>
+
             </Space>
           ) : (
             <span style={{color: '#888'}}>暂无最新英雄信息</span>

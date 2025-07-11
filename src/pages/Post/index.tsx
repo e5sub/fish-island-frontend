@@ -121,7 +121,7 @@ const PostPage: React.FC = () => {
         setHotTopics(result.data.records.map(post => ({
           title: post.title || '',
           url: `/post/${post.id}`,
-          followerCount: post.commentNum || 0, // 使用评论数作为参与人数
+          followerCount: post.thumbNum || 0, // 使用点赞数作为参与人数
         })));
       }
     } catch (error) {
@@ -494,139 +494,138 @@ const PostPage: React.FC = () => {
               </div>
             </div>
 
-            <div id="scrollableDiv" style={{overflow: 'auto', padding: '0 16px'}}>
-              {loading && posts.length === 0 ? (
-                renderPostSkeleton()
-              ) : (
-                <InfiniteScroll
-                  dataLength={posts.length}
-                  next={loadMoreData}
-                  hasMore={hasMore}
-                  loader={
-                    <div className="loading-container">
-                      <Spin size="large" tip="加载中..."/>
-                    </div>
-                  }
-                  endMessage={
-                    <div className="loading-container" style={{color: '#999'}}>
-                      没有更多帖子了
-                    </div>
-                  }
-                  scrollableTarget="scrollableDiv"
-                >
-                  <List
-                    itemLayout="vertical"
-                    size="large"
-                    dataSource={posts}
-                    renderItem={item => (
-                      <List.Item
-                        key={item.id}
-                        className="post-item"
-                        onClick={() => history.push(`/post/${String(item.id)}`)}
-                        style={{cursor: 'pointer'}}
-                        actions={[
-                          // 在移动端不显示阅读量、点赞数和评论数
-                          !isMobile &&
-                          <span onClick={(e) => e.stopPropagation()}><EyeOutlined/> 浏览 {item.viewNum || 0}</span>,
-                          !isMobile &&
+            {loading && posts.length === 0 ? (
+              renderPostSkeleton()
+            ) : (
+              <InfiniteScroll
+                dataLength={posts.length}
+                next={loadMoreData}
+                hasMore={hasMore}
+                loader={
+                  <div className="loading-container">
+                    <Spin size="large" tip="加载中..."/>
+                  </div>
+                }
+                endMessage={
+                  <div className="loading-container" style={{color: '#999'}}>
+                    没有更多帖子了
+                  </div>
+                }
+              >
+                <List
+                  itemLayout="vertical"
+                  size="large"
+                  dataSource={posts}
+                  renderItem={item => (
+                    <List.Item
+                      key={item.id}
+                      className="post-item"
+                      onClick={() => history.push(`/post/${String(item.id)}`)}
+                      style={{cursor: 'pointer'}}
+                      actions={[
+                        // 在移动端不显示阅读量、点赞数和评论数
+                        !isMobile &&
+                        <span onClick={(e) => e.stopPropagation()}><EyeOutlined/> 浏览 {item.viewNum || 0}</span>,
+                        !isMobile &&
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleThumbPost(String(item.id), item.hasThumb || false, item.thumbNum || 0);
+                          }}
+                          className={item.hasThumb ? 'like-button active' : 'like-button'}
+                        >
+                          {item.hasThumb ? <LikeFilled/> : <LikeOutlined/>} 点赞 {item.thumbNum || 0}
+                        </span>,
+                        !isMobile &&
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            history.push(`/post/${String(item.id)}`);
+                          }}
+                          className="comment-link"
+                        >
+                          <MessageOutlined/> 评论 {item.commentNum || 0}
+                        </span>,
+                        canDeletePost(item) && (
                           <span
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleThumbPost(String(item.id), item.hasThumb || false, item.thumbNum || 0);
+                              history.push(`/post/edit/${item.id}`);
                             }}
-                            className={item.hasThumb ? 'like-button active' : 'like-button'}
+                            className="edit-action"
                           >
-                            {item.hasThumb ? <LikeFilled/> : <LikeOutlined/>} 点赞 {item.thumbNum || 0}
-                          </span>,
-                          !isMobile &&
+                            <EditOutlined style={{color: '#1890ff'}}/> {isMobile ? '' : '编辑'}
+                          </span>
+                        ),
+                        canDeletePost(item) && (
                           <span
                             onClick={(e) => {
                               e.stopPropagation();
-                              history.push(`/post/${String(item.id)}`);
+                              // 直接传递原始ID，避免Number()转换导致精度丢失
+                              showDeleteConfirm(item.id);
                             }}
-                            className="comment-link"
+                            className="delete-action"
                           >
-                            <MessageOutlined/> 评论 {item.commentNum || 0}
-                          </span>,
-                          canDeletePost(item) && (
-                            <span
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                history.push(`/post/edit/${item.id}`);
-                              }}
-                              className="edit-action"
-                            >
-                              <EditOutlined style={{color: '#1890ff'}}/> {isMobile ? '' : '编辑'}
-                            </span>
-                          ),
-                          canDeletePost(item) && (
-                            <span
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // 直接传递原始ID，避免Number()转换导致精度丢失
-                                showDeleteConfirm(item.id);
-                              }}
-                              className="delete-action"
-                            >
-                              <DeleteOutlined style={{color: '#ff4d4f'}}/> {isMobile ? '' : '删除'}
-                            </span>
-                          ),
-                        ].filter(Boolean)}
-                      >
-                        <div className="post-item-header">
-                          <Avatar src={item.user?.userAvatar || 'https://joeschmoe.io/api/v1/random'}
-                                  size={isMobile ? 32 : 40}/>
-                          <div className="post-author-info">
-                            <div className="author-name">
-                              <span>{item.user?.userName || '匿名用户'}</span>
-                              <span className="post-time">{formatTime(item.createTime)}</span>
-                            </div>
-                            <div className="post-tags">
-                              {item.tagList && item.tagList.map((tag, index) => {
-                                // 查找对应的标签对象以获取颜色和图标
-                                const tagObj = tags.find(t => t.tagsName === tag);
-                                const color = tagObj ? getTagColor(tagObj) : 'blue';
-                                // 在移动设备上限制显示的标签数量
-                                if (isMobile && index > 1) return null;
-                                return (
-                                  <Tag
-                                    key={index}
-                                    color={color}
-                                    className="category-tag-small"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    {renderTagIcon(tagObj)}
-                                    {tag}
-                                  </Tag>
-                                );
-                              })}
-                              {/* 如果在移动设备上有更多标签，显示+N */}
-                              {isMobile && item.tagList && item.tagList.length > 2 && (
-                                <Tag className="category-tag-small">
-                                  +{item.tagList.length - 2}
+                            <DeleteOutlined style={{color: '#ff4d4f'}}/> {isMobile ? '' : '删除'}
+                          </span>
+                        ),
+                      ].filter(Boolean)}
+                    >
+                      <div className="post-item-header">
+                        <Avatar src={item.user?.userAvatar || 'https://joeschmoe.io/api/v1/random'}
+                                size={isMobile ? 32 : 40}/>
+                        <div className="post-author-info">
+                          <div className="author-name">
+                            <span>{item.user?.userName || '匿名用户'}</span>
+                            <span className="post-time">{formatTime(item.createTime)}</span>
+                          </div>
+                          <div className="post-tags">
+                            {item.tagList && item.tagList.map((tag, index) => {
+                              // 查找对应的标签对象以获取颜色和图标
+                              const tagObj = tags.find(t => t.tagsName === tag);
+                              const color = tagObj ? getTagColor(tagObj) : 'blue';
+                              // 在移动设备上限制显示的标签数量
+                              if (isMobile && index > 1) return null;
+                              return (
+                                <Tag
+                                  key={index}
+                                  color={color}
+                                  className="category-tag-small"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {renderTagIcon(tagObj)}
+                                  {tag}
                                 </Tag>
-                              )}
-                            </div>
+                              );
+                            })}
+                            {/* 如果在移动设备上有更多标签，显示+N */}
+                            {isMobile && item.tagList && item.tagList.length > 2 && (
+                              <Tag className="category-tag-small">
+                                +{item.tagList.length - 2}
+                              </Tag>
+                            )}
                           </div>
                         </div>
+                      </div>
 
-                        <div className="post-content-wrapper">
-                          <div className="post-title">
-                            {item.title}
-                          </div>
-
-                          {item.latestComment && (
-                            <div className="post-content hot-comment">
-                              {item.latestComment.content}
-                            </div>
-                          )}
+                      <div className="post-content-wrapper">
+                        <div className="post-title">
+                          {item.title}
                         </div>
-                      </List.Item>
-                    )}
-                  />
-                </InfiniteScroll>
-              )}
-            </div>
+
+                        {item.thumbComment && (
+                          <div className="post-content hot-comment">
+                            {item.thumbComment.content && item.thumbComment.content.match(/\[img\](.*?)\[\/img\]/i)
+                              ? '【图片】'
+                              : item.thumbComment.content}
+                          </div>
+                        )}
+                      </div>
+                    </List.Item>
+                  )}
+                />
+              </InfiniteScroll>
+            )}
           </Card>
         </div>
 
@@ -645,7 +644,7 @@ const PostPage: React.FC = () => {
                     }}
                   />
                   <Link to={item.url || '#'}>{item.title}</Link>
-                  <span className="topic-count">{item.followerCount || 0}人参与</span>
+                  <span className="topic-count">{item.followerCount || 0}人点赞</span>
                 </List.Item>
               )}
             />

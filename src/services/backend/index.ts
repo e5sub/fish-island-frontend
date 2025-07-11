@@ -7,7 +7,9 @@ import * as chatController from './chatController';
 import * as commentController from './commentController';
 import * as commentThumbController from './commentThumbController';
 import * as donationRecordsController from './donationRecordsController';
+import * as drawGameController from './drawGameController';
 import * as emoticonFavourController from './emoticonFavourController';
+import * as eventRemindController from './eventRemindController';
 import * as fileController from './fileController';
 import * as heroController from './heroController';
 import * as hotPostController from './hotPostController';
@@ -31,7 +33,9 @@ export default {
   commentController,
   commentThumbController,
   donationRecordsController,
+  drawGameController,
   emoticonFavourController,
+  eventRemindController,
   fileController,
   heroController,
   hotPostController,

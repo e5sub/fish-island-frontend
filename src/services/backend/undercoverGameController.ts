@@ -63,9 +63,9 @@ export async function getPlayerInfoUsingGet(
 }
 
 /** 根据房间ID获取房间信息 GET /api/undercover/room/byId */
-export async function getRoomByIdUsingGet(
+export async function getRoomByIdUsingGet1(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.getRoomByIdUsingGETParams,
+  params: API.getRoomByIdUsingGET1Params,
   options?: { [key: string]: any },
 ) {
   return request<API.BaseResponseUndercoverRoomVO_>('/api/undercover/room/byId', {
@@ -78,7 +78,7 @@ export async function getRoomByIdUsingGet(
 }
 
 /** 创建游戏房间 POST /api/undercover/room/create */
-export async function createRoomUsingPost(
+export async function createRoomUsingPost1(
   body: API.UndercoverRoomCreateRequest,
   options?: { [key: string]: any },
 ) {
@@ -93,9 +93,9 @@ export async function createRoomUsingPost(
 }
 
 /** 结束游戏 POST /api/undercover/room/end */
-export async function endGameUsingPost(
+export async function endGameUsingPost1(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.endGameUsingPOSTParams,
+  params: API.endGameUsingPOST1Params,
   options?: { [key: string]: any },
 ) {
   return request<API.BaseResponseBoolean_>('/api/undercover/room/end', {
@@ -108,7 +108,7 @@ export async function endGameUsingPost(
 }
 
 /** 卧底猜平民词 POST /api/undercover/room/guess */
-export async function guessWordUsingPost(
+export async function guessWordUsingPost1(
   body: API.UndercoverGuessRequest,
   options?: { [key: string]: any },
 ) {
@@ -123,7 +123,7 @@ export async function guessWordUsingPost(
 }
 
 /** 加入游戏房间 POST /api/undercover/room/join */
-export async function joinRoomUsingPost(
+export async function joinRoomUsingPost1(
   body: API.UndercoverRoomJoinRequest,
   options?: { [key: string]: any },
 ) {
@@ -138,7 +138,7 @@ export async function joinRoomUsingPost(
 }
 
 /** 获取所有房间列表 GET /api/undercover/room/list */
-export async function getAllRoomsUsingGet(options?: { [key: string]: any }) {
+export async function getAllRoomsUsingGet1(options?: { [key: string]: any }) {
   return request<API.BaseResponseListUndercoverRoomVO_>('/api/undercover/room/list', {
     method: 'GET',
     ...(options || {}),
@@ -164,7 +164,7 @@ export async function getRoomPlayersDetailUsingGet(
 }
 
 /** 退出游戏房间 POST /api/undercover/room/quit */
-export async function quitRoomUsingPost(
+export async function quitRoomUsingPost1(
   body: API.UndercoverRoomQuitRequest,
   options?: { [key: string]: any },
 ) {
@@ -194,9 +194,9 @@ export async function removeActiveRoomUsingPost(
 }
 
 /** 开始游戏 POST /api/undercover/room/start */
-export async function startGameUsingPost(
+export async function startGameUsingPost1(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.startGameUsingPOSTParams,
+  params: API.startGameUsingPOST1Params,
   options?: { [key: string]: any },
 ) {
   return request<API.BaseResponseBoolean_>('/api/undercover/room/start', {

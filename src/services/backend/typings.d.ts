@@ -44,6 +44,18 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseDrawGuessVO_ = {
+    code?: number;
+    data?: DrawGuessVO;
+    message?: string;
+  };
+
+  type BaseResponseDrawRoomVO_ = {
+    code?: number;
+    data?: DrawRoomVO;
+    message?: string;
+  };
+
   type BaseResponseHeroVO_ = {
     code?: number;
     data?: HeroVO;
@@ -59,6 +71,18 @@ declare namespace API {
   type BaseResponseListAvatarFrame_ = {
     code?: number;
     data?: AvatarFrame[];
+    message?: string;
+  };
+
+  type BaseResponseListDrawGuessVO_ = {
+    code?: number;
+    data?: DrawGuessVO[];
+    message?: string;
+  };
+
+  type BaseResponseListDrawRoomVO_ = {
+    code?: number;
+    data?: DrawRoomVO[];
     message?: string;
   };
 
@@ -173,6 +197,12 @@ declare namespace API {
   type BaseResponsePageEmoticonFavour_ = {
     code?: number;
     data?: PageEmoticonFavour_;
+    message?: string;
+  };
+
+  type BaseResponsePageEventRemindVO_ = {
+    code?: number;
+    data?: PageEventRemindVO_;
     message?: string;
   };
 
@@ -487,6 +517,63 @@ declare namespace API {
     userId?: number;
   };
 
+  type DrawDataSaveRequest = {
+    drawData?: string;
+    roomId?: string;
+  };
+
+  type DrawGuessRequest = {
+    guessWord?: string;
+    messageWrapper?: MessageWrapper;
+    roomId?: string;
+  };
+
+  type DrawGuessVO = {
+    guessTime?: string;
+    guessWord?: string;
+    isCorrect?: boolean;
+    userAvatar?: string;
+    userId?: number;
+    userName?: string;
+  };
+
+  type DrawPlayerVO = {
+    hasGuessedCorrectly?: boolean;
+    isCreator?: boolean;
+    isCurrentDrawer?: boolean;
+    score?: number;
+    userAvatar?: string;
+    userId?: number;
+    userName?: string;
+  };
+
+  type DrawRoomCreateRequest = {
+    maxPlayers?: number;
+    totalRounds?: number;
+  };
+
+  type DrawRoomVO = {
+    correctGuessPlayers?: DrawPlayerVO[];
+    createTime?: string;
+    creatorAvatar?: string;
+    creatorId?: number;
+    creatorName?: string;
+    currentDrawerId?: number;
+    currentDrawerName?: string;
+    currentPlayers?: number;
+    currentRound?: number;
+    currentWord?: string;
+    drawData?: string;
+    maxPlayers?: number;
+    participants?: DrawPlayerVO[];
+    roomId?: string;
+    roundEndTime?: number;
+    startTime?: string;
+    status?: 'WAITING' | 'PLAYING' | 'ENDED';
+    totalRounds?: number;
+    wordHint?: string;
+  };
+
   type eliminatePlayerUsingPOSTParams = {
     /** roomId */
     roomId: string;
@@ -502,9 +589,42 @@ declare namespace API {
     userId?: number;
   };
 
+  type endGameUsingPOST1Params = {
+    /** roomId */
+    roomId: string;
+  };
+
   type endGameUsingPOSTParams = {
     /** roomId */
     roomId: string;
+  };
+
+  type EventRemindQueryRequest = {
+    action?: string;
+    current?: number;
+    pageSize?: number;
+    sortField?: string;
+    sortOrder?: string;
+    state?: number;
+  };
+
+  type EventRemindStateRequest = {
+    ids?: number[];
+  };
+
+  type EventRemindVO = {
+    action?: string;
+    createTime?: string;
+    id?: number;
+    recipientId?: number;
+    remindTime?: string;
+    senderId?: number;
+    senderUser?: UserVO;
+    sourceContent?: string;
+    sourceId?: number;
+    sourceType?: number;
+    state?: number;
+    url?: string;
   };
 
   type exchangeFrameUsingPOSTParams = {
@@ -580,9 +700,19 @@ declare namespace API {
     redPacketId: string;
   };
 
-  type getRoomByIdUsingGETParams = {
+  type getRoomByIdUsingGET1Params = {
     /** roomId */
     roomId?: string;
+  };
+
+  type getRoomByIdUsingGETParams = {
+    /** roomId */
+    roomId: string;
+  };
+
+  type getRoomGuessesUsingGETParams = {
+    /** roomId */
+    roomId: string;
   };
 
   type getRoomPlayersDetailUsingGETParams = {
@@ -666,6 +796,11 @@ declare namespace API {
     type?: string;
     typeName?: string;
     updateTime?: string;
+  };
+
+  type joinRoomUsingPOSTParams = {
+    /** roomId */
+    roomId: string;
   };
 
   type LoginUserVO = {
@@ -836,6 +971,11 @@ declare namespace API {
     newUserCount?: number;
   };
 
+  type nextRoundUsingPOSTParams = {
+    /** roomId */
+    roomId: string;
+  };
+
   type OrderItem = {
     asc?: boolean;
     column?: string;
@@ -914,6 +1054,19 @@ declare namespace API {
     orders?: OrderItem[];
     pages?: number;
     records?: EmoticonFavour[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
+  type PageEventRemindVO_ = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: EventRemindVO[];
     searchCount?: boolean;
     size?: number;
     total?: number;
@@ -1085,6 +1238,11 @@ declare namespace API {
     userId?: number;
   };
 
+  type PostFeaturedRequest = {
+    id?: number;
+    isFeatured?: number;
+  };
+
   type PostQueryRequest = {
     content?: string;
     current?: number;
@@ -1120,14 +1278,19 @@ declare namespace API {
     hasThumb?: boolean;
     id?: number;
     isFeatured?: number;
-    latestComment?: CommentVO;
     tagList?: string[];
+    thumbComment?: CommentVO;
     thumbNum?: number;
     title?: string;
     updateTime?: string;
     user?: UserVO;
     userId?: number;
     viewNum?: number;
+  };
+
+  type quitRoomUsingPOSTParams = {
+    /** roomId */
+    roomId: string;
   };
 
   type recordGuessSuccessUsingPOSTParams = {
@@ -1156,6 +1319,11 @@ declare namespace API {
   type removeActiveRoomUsingPOSTParams = {
     /** roomId */
     roomId?: string;
+  };
+
+  type removeRoomUsingPOSTParams = {
+    /** roomId */
+    roomId: string;
   };
 
   type renderAuthUsingGETParams = {
@@ -1230,6 +1398,11 @@ declare namespace API {
     id?: number;
   };
 
+  type startGameUsingPOST1Params = {
+    /** roomId */
+    roomId: string;
+  };
+
   type startGameUsingPOSTParams = {
     /** roomId */
     roomId: string;
@@ -1257,6 +1430,7 @@ declare namespace API {
     icon?: string;
     sort?: number;
     tagsName?: string;
+    type?: number;
   };
 
   type TagsQueryRequest = {

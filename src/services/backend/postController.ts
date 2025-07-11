@@ -44,6 +44,21 @@ export async function editPostUsingPost(
   });
 }
 
+/** 设置帖子加精状态（仅管理员） POST /api/post/featured */
+export async function setFeaturedStatusUsingPost(
+  body: API.PostFeaturedRequest,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponseBoolean_>('/api/post/featured', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
 /** 根据 id 获取 GET /api/post/get/vo */
 export async function getPostVoByIdUsingGet(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)

@@ -23,16 +23,16 @@ import {
   UnorderedListOutlined
 } from '@ant-design/icons';
 import {
-  getRoomByIdUsingGet,
+  getRoomByIdUsingGet1,
   voteUsingPost,
-  joinRoomUsingPost,
-  startGameUsingPost,
-  endGameUsingPost,
-  createRoomUsingPost,
+  joinRoomUsingPost1,
+  startGameUsingPost1,
+  endGameUsingPost1,
+  createRoomUsingPost1,
   removeActiveRoomUsingPost,
-  quitRoomUsingPost,
-  guessWordUsingPost,
-  getAllRoomsUsingGet
+  quitRoomUsingPost1,
+  guessWordUsingPost1,
+  getAllRoomsUsingGet1
 } from '@/services/backend/undercoverGameController';
 import { history, useModel } from '@umijs/max';
 import styles from './index.less';
@@ -177,12 +177,12 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
         // 检查消息格式
         if (data?.type === 'undercover') {
           const messageData = data.data.message;
-          
+
           // 检查消息是否属于当前房间
           if (messageData.roomId && roomInfo?.roomId && messageData.roomId !== roomInfo.roomId) {
             return; // 如果消息不属于当前房间，则不处理
           }
-          
+
           const newMessage: ChatMessage = {
             content: messageData.content,
             userId: messageData.sender.id,
@@ -217,7 +217,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
         } else {
           // 如果消息不包含房间ID，刷新当前房间信息（兼容旧消息格式）
           safelyCallRef(fetchRoomInfoRef, true);
-          
+
           // 同时也刷新房间列表
           if (activeTab === 'list') {
             safelyCallRef(fetchRoomListRef);
@@ -247,10 +247,10 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
           if (countdownTimerRef.current) {
             clearInterval(countdownTimerRef.current);
           }
-          
+
           // 设置初始倒计时值
           setCountdown(data.time);
-          
+
           // 启动倒计时
           countdownTimerRef.current = setInterval(() => {
             setCountdown(prev => {
@@ -278,7 +278,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
         wsService.removeMessageHandler('refreshRoom', handleRefreshRoomMessage);
         wsService.removeMessageHandler('gameStart', handleGameStartMessage);
         wsService.removeMessageHandler('countdown', handleCountdownMessage);
-        
+
         // 清除倒计时定时器
         if (countdownTimerRef.current) {
           clearInterval(countdownTimerRef.current);
@@ -313,7 +313,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
           try {
             // 清空聊天消息，以便加载新房间的消息
             setChatMessages([]);
-            
+
             // 设置当前活跃房间ID并加入房间
             if (roomIdStr && roomIdStr.trim() !== '') {
               setActiveRoomId(roomIdStr);
@@ -331,7 +331,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
         try {
           // 清空聊天消息，以便加载新房间的消息
           setChatMessages([]);
-          
+
           // 设置当前活跃房间ID并加入房间
           if (roomIdStr && roomIdStr.trim() !== '') {
             setActiveRoomId(roomIdStr);
@@ -367,7 +367,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
       // 如果没有活跃房间ID，先从房间列表获取一个
       if (!activeRoomId) {
         try {
-          const roomListResponse = await getAllRoomsUsingGet();
+          const roomListResponse = await getAllRoomsUsingGet1();
           if (roomListResponse.code === 0 && roomListResponse.data && roomListResponse.data.length > 0) {
             // 找到一个当前用户参与的房间或者第一个等待中的房间
             const userRoom = roomListResponse.data.find(room =>
@@ -382,7 +382,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
             setActiveRoomId(targetRoom.roomId || null);
 
             if (targetRoom.roomId) {
-              const response = await getRoomByIdUsingGet({
+              const response = await getRoomByIdUsingGet1({
                 roomId: targetRoom.roomId
               });
 
@@ -411,7 +411,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
         }
       } else {
         // 如果有活跃房间ID，直接获取该房间信息
-        const response = await getRoomByIdUsingGet({
+        const response = await getRoomByIdUsingGet1({
           roomId: activeRoomId
         });
 
@@ -452,7 +452,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
   fetchRoomListRef.current = async () => {
     try {
       setRoomListLoading(true);
-      const response = await getAllRoomsUsingGet();
+      const response = await getAllRoomsUsingGet1();
       if (response.code === 0 && response.data) {
         setRoomList(response.data);
       } else {
@@ -473,11 +473,11 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
     try {
       setJoiningRoomId(roomId);
       setJoiningRoom(true);
-      
+
       // 先设置当前活跃房间ID，确保后续操作使用正确的roomId
       setActiveRoomId(roomId);
-      
-      const response = await joinRoomUsingPost({
+
+      const response = await joinRoomUsingPost1({
         roomId: roomId
       });
 
@@ -499,16 +499,16 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
 
         // 切换到当前房间标签
         setActiveTab('current');
-        
+
         // 清空聊天消息，以便加载新房间的消息
         setChatMessages([]);
-        
+
         // 直接获取房间信息，而不是使用fetchRoomInfoRef
         try {
-          const roomResponse = await getRoomByIdUsingGet({
+          const roomResponse = await getRoomByIdUsingGet1({
             roomId: roomId
           });
-          
+
           if (roomResponse.code === 0 && roomResponse.data) {
             setRoomInfo(roomResponse.data);
             setVotingFor(null);
@@ -605,11 +605,11 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
     if (roomInfo?.roomId) {
       try {
         setJoiningRoom(true);
-        
+
         // 保存当前房间ID
         const currentRoomId = roomInfo.roomId;
-        
-        const response = await joinRoomUsingPost({
+
+        const response = await joinRoomUsingPost1({
           roomId: currentRoomId
         });
 
@@ -634,10 +634,10 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
 
           // 直接获取房间信息，而不是使用fetchRoomInfo
           try {
-            const roomResponse = await getRoomByIdUsingGet({
+            const roomResponse = await getRoomByIdUsingGet1({
               roomId: currentRoomId
             });
-            
+
             if (roomResponse.code === 0 && roomResponse.data) {
               setRoomInfo(roomResponse.data);
               setVotingFor(null);
@@ -857,7 +857,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
 
     try {
       setStartingGame(true);
-      const response = await startGameUsingPost({
+      const response = await startGameUsingPost1({
         roomId: roomInfo.roomId
       });
 
@@ -900,7 +900,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
 
     try {
       setEndingGame(true);
-      const response = await endGameUsingPost({
+      const response = await endGameUsingPost1({
         roomId: roomInfo.roomId
       });
 
@@ -968,7 +968,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
         } : {})
       };
 
-      const response = await createRoomUsingPost(requestParams);
+      const response = await createRoomUsingPost1(requestParams);
 
       if (response.code === 0 && response.data) {
         message.success('创建房间成功');
@@ -987,7 +987,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
         });
 
         setIsCreateModalVisible(false);
-        
+
         // 不再设置当前活跃房间ID和切换到房间标签
         // 而是刷新房间列表并切换到列表标签
         setActiveTab('list');
@@ -1121,7 +1121,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
 
     try {
       setQuittingRoom(true);
-      const response = await quitRoomUsingPost({
+      const response = await quitRoomUsingPost1({
         roomId: roomInfo.roomId
       });
 
@@ -1523,8 +1523,8 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
 
   // 获取特定用户的所有消息（当前房间）
   const getUserMessages = (userId: number) => {
-    return chatMessages.filter(msg => 
-      msg.userId === userId && 
+    return chatMessages.filter(msg =>
+      msg.userId === userId &&
       (!roomInfo?.roomId || !msg.roomId || msg.roomId === roomInfo.roomId)
     );
   };
@@ -1550,8 +1550,8 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
 
   // 判断用户是否有聊天记录（当前房间）
   const hasUserMessages = (userId: number) => {
-    return chatMessages.some(msg => 
-      msg.userId === userId && 
+    return chatMessages.some(msg =>
+      msg.userId === userId &&
       (!roomInfo?.roomId || !msg.roomId || msg.roomId === roomInfo.roomId)
     );
   };
@@ -1592,7 +1592,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
 
     try {
       setGuessing(true);
-      const response = await guessWordUsingPost({
+      const response = await guessWordUsingPost1({
         roomId: roomInfo.roomId,
         guessWord: values.guessWord
       });
@@ -1876,7 +1876,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
             </div>
           </div>
         )}
-        
+
         {/* 原有的游戏信息 */}
         {roomInfo.gameMode === 2 ? (
           roomInfo.role === 'undercover' ? (
@@ -1934,7 +1934,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
               <Badge status={statusInfo.badgeStatus} text={statusInfo.text} />
             </div>
           </div>
-          
+
           {/* 第二行：房间模式和人数 */}
           <div className={styles.roomListItemInfo}>
             <div className={styles.roomListItemMode}>
@@ -1944,7 +1944,7 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
               <TeamOutlined /> {room.participants?.length || 0}/{room.maxPlayers || 8} 玩家
             </div>
           </div>
-          
+
           {/* 第三行：操作按钮 */}
           <div className={styles.roomListItemActions}>
             <Button
@@ -1955,26 +1955,26 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
                   message.error("无效的房间ID");
                   return;
                 }
-                
+
                 // 先清空聊天消息，以便加载新房间的消息
                 setChatMessages([]);
-                
+
                 // 保存当前房间ID
                 const targetRoomId = room.roomId;
-                
+
                 // 设置当前活跃房间ID
                 setActiveRoomId(targetRoomId);
-                
+
                 // 切换到当前房间标签
                 setActiveTab('current');
-                
+
                 // 直接获取房间信息
                 try {
                   setLoading(true);
-                  const response = await getRoomByIdUsingGet({
+                  const response = await getRoomByIdUsingGet1({
                     roomId: targetRoomId
                   });
-                  
+
                   if (response.code === 0 && response.data) {
                     setRoomInfo(response.data);
                     setVotingFor(null);
@@ -2133,9 +2133,9 @@ const RoomInfoCard = ({ visible, onClose }: RoomInfoCardProps): React.ReactNode 
                         <h3 className={styles.roomName}>谁是卧底</h3>
                         {roomInfo.creatorId && (
                           <div className={styles.creatorInfo}>
-                            <Avatar 
-                              size="small" 
-                              src={roomInfo.creatorAvatar} 
+                            <Avatar
+                              size="small"
+                              src={roomInfo.creatorAvatar}
                               icon={!roomInfo.creatorAvatar && <UserOutlined />}
                             />
                             <span className={styles.creatorName}>{roomInfo.creatorName || '未知用户'}</span>

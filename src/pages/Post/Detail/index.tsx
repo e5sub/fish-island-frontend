@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {useParams, history, Link} from 'umi';
-import {Card, Avatar, Typography, Space, Divider, List, Button, message, Spin, Input, Pagination, Modal} from 'antd';
+import {Card, Avatar, Typography, Space, Divider, List, Button, message, Spin, Input, Pagination, Modal, Popover, Image} from 'antd';
 import {
   LikeOutlined,
   LikeFilled,
@@ -15,7 +15,11 @@ import {
   LeftOutlined,
   RightOutlined,
   UpOutlined,
-  DownOutlined
+  DownOutlined,
+  SmileOutlined,
+  PictureOutlined,
+  CloseCircleOutlined,
+  LoadingOutlined
 } from '@ant-design/icons';
 import {getPostVoByIdUsingGet, deletePostUsingPost1} from '@/services/backend/postController';
 import {doThumbUsingPost1} from '@/services/backend/postThumbController';
@@ -28,16 +32,31 @@ import {
 } from '@/services/backend/commentController';
 import {doThumbUsingPost} from '@/services/backend/commentThumbController';
 import {getLoginUserUsingGet} from '@/services/backend/userController';
+import {uploadFileByMinioUsingPost} from '@/services/backend/fileController';
 import Vditor from 'vditor';
 import moment from 'moment';
 import 'moment/locale/zh-cn';
 import 'vditor/dist/index.css';
 import './index.less';
+import EmoticonPicker from '@/components/EmoticonPicker';
+import data from '@emoji-mart/data';
+import zhData from '@emoji-mart/data/i18n/zh.json';
+import Picker from '@emoji-mart/react';
 
 const {Title, Text, Paragraph} = Typography;
 const {TextArea} = Input;
 
 moment.locale('zh-cn');
+
+// 添加 emoji 类型定义
+interface EmojiData {
+  id: string;
+  name: string;
+  native: string;
+  unified: string;
+  keywords: string[];
+  shortcodes: string;
+}
 
 // 扩展 CommentNodeVO 类型
 interface ExtendedCommentNodeVO extends API.CommentNodeVO {
@@ -77,6 +96,218 @@ const PostDetail: React.FC = () => {
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  // 添加表情相关状态
+  const [isEmoticonPickerVisible, setIsEmoticonPickerVisible] = useState<boolean>(false);
+  const [isEmojiPickerVisible, setIsEmojiPickerVisible] = useState<boolean>(false);
+  const inputRef = useRef<any>(null);
+  const [pastedImages, setPastedImages] = useState<string[]>([]);
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [replyPastedImages, setReplyPastedImages] = useState<{[commentId: string]: string[]}>({});
+  const [uploadingImage, setUploadingImage] = useState<boolean>(false);
+  const [uploadingReplyImage, setUploadingReplyImage] = useState<{[commentId: string]: boolean}>({});
+  
+  // 处理图片压缩
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // 如果图片尺寸过大，先缩小尺寸
+          const maxDimension = 2000; // 最大尺寸
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('无法创建画布上下文'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // 尝试不同的质量级别，直到文件大小小于 1MB
+          let quality = 0.9;
+          let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+
+          while (compressedDataUrl.length > 1024 * 1024 && quality > 0.1) {
+            quality -= 0.1;
+            compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+
+          // 将 DataURL 转换回 File 对象
+          const arr = compressedDataUrl.split(',');
+          const mime = arr[0].match(/:(.*?);/)?.[1];
+          const bstr = atob(arr[1]);
+          let n = bstr.length;
+          const u8arr = new Uint8Array(n);
+
+          while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+          }
+
+          const compressedFile = new File([u8arr], file.name, { type: mime || 'image/jpeg' });
+          resolve(compressedFile);
+        };
+        img.onerror = () => reject(new Error('图片加载失败'));
+      };
+      reader.onerror = () => reject(new Error('文件读取失败'));
+    });
+  };
+
+  // 处理图片上传 - 主评论
+  const handleImageUpload = async (file: File) => {
+    try {
+      setUploadingImage(true);
+
+      // 如果文件大小超过 1MB，进行压缩
+      if (file.size > 1024 * 1024) {
+        const compressedFile = await compressImage(file);
+        if (compressedFile) {
+          file = compressedFile;
+        }
+      }
+
+      // 调用上传接口
+      const res = await uploadFileByMinioUsingPost(
+        { biz: 'user_post' }, // 业务标识参数
+        {}, // body 参数
+        file, // 文件参数
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (!res.data) {
+        throw new Error('图片上传失败');
+      }
+
+      // 添加上传的图片URL到预览列表
+      setPastedImages([...pastedImages, res.data]);
+    } catch (error) {
+      message.error(`上传失败：${error}`);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // 处理粘贴事件 - 主评论
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const blob = items[i].getAsFile();
+        if (blob) {
+          await handleImageUpload(blob);
+        }
+        break;
+      }
+    }
+  };
+
+  // 处理删除粘贴图片
+  const handleRemoveImage = (index: number) => {
+    setPastedImages(pastedImages.filter((_, i) => i !== index));
+  };
+
+  // 处理图片上传 - 回复评论
+  const handleReplyImageUpload = async (commentId: number | string, file: File) => {
+    const commentIdStr = commentId.toString();
+    try {
+      // 设置对应评论的上传状态
+      setUploadingReplyImage(prev => ({
+        ...prev,
+        [commentIdStr]: true
+      }));
+
+      // 如果文件大小超过 1MB，进行压缩
+      if (file.size > 1024 * 1024) {
+        const compressedFile = await compressImage(file);
+        if (compressedFile) {
+          file = compressedFile;
+        }
+      }
+
+      // 调用上传接口
+      const res = await uploadFileByMinioUsingPost(
+        { biz: 'post_comment_reply' }, // 业务标识参数
+        {}, // body 参数
+        file, // 文件参数
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (!res.data) {
+        throw new Error('图片上传失败');
+      }
+
+      // 添加上传的图片URL到对应评论的预览列表
+      setReplyPastedImages(prev => {
+        const currentImages = prev[commentIdStr] || [];
+        return {
+          ...prev,
+          [commentIdStr]: [...currentImages, res.data]
+        };
+      });
+    } catch (error) {
+      message.error(`上传失败：${error}`);
+    } finally {
+      setUploadingReplyImage(prev => ({
+        ...prev,
+        [commentIdStr]: false
+      }));
+    }
+  };
+
+  // 处理粘贴事件 - 回复评论
+  const handleReplyPaste = async (commentId: number | string, e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const blob = items[i].getAsFile();
+        if (blob) {
+          await handleReplyImageUpload(commentId, blob);
+        }
+        break;
+      }
+    }
+  };
+
+  // 处理删除回复中的粘贴图片
+  const handleRemoveReplyImage = (commentId: number | string, index: number) => {
+    const commentIdStr = commentId.toString();
+    setReplyPastedImages(prev => {
+      const currentImages = [...(prev[commentIdStr] || [])];
+      currentImages.splice(index, 1);
+      return {
+        ...prev,
+        [commentIdStr]: currentImages
+      };
+    });
+  };
 
   // 格式化时间
   const formatTime = (timeString?: string) => {
@@ -404,6 +635,13 @@ const PostDetail: React.FC = () => {
   // 切换回复框显示状态
   const toggleReplyBox = (commentId: number | string) => {
     console.log('切换回复框:', commentId);
+    
+    // 清空该评论的粘贴图片
+    setReplyPastedImages(prev => {
+      const newImages = {...prev};
+      delete newImages[commentId.toString()];
+      return newImages;
+    });
 
     setComments(comments.map(comment => {
       if (comment.id === commentId) {
@@ -564,15 +802,18 @@ const PostDetail: React.FC = () => {
 
     console.log('回复内容:', replyContent, '评论ID:', parentId, '找到评论:', foundComment);
 
-    if (!foundComment) {
-      console.error('未找到对应的评论');
-      message.warning('回复失败：未找到对应的评论');
+    const parentIdStr = parentId.toString();
+    const pastedImagesForComment = replyPastedImages[parentIdStr] || [];
+    
+    if (!replyContent.trim() && pastedImagesForComment.length === 0) {
+      console.error('回复内容为空');
+      message.warning('回复内容不能为空');
       return;
     }
 
-    if (!replyContent.trim()) {
-      console.error('回复内容为空');
-      message.warning('回复内容不能为空');
+    if (!foundComment) {
+      console.error('未找到对应的评论');
+      message.warning('回复失败：未找到对应的评论');
       return;
     }
 
@@ -627,9 +868,19 @@ const PostDetail: React.FC = () => {
     }));
 
     try {
+      // 组合回复内容，包括粘贴的图片
+      let finalContent = replyContent.trim();
+      
+      // 添加图片标签
+      if (pastedImagesForComment.length > 0) {
+        pastedImagesForComment.forEach(imageUrl => {
+          finalContent += `\n[img]${imageUrl}[/img]`;
+        });
+      }
+      
       await addCommentUsingPost({
         postId: id as unknown as number,
-        content: replyContent,
+        content: finalContent,
         parentId: parentId as unknown as number,
         rootId: finalRootId as unknown as number
       } as any);
@@ -680,6 +931,13 @@ const PostDetail: React.FC = () => {
         }
         return comment;
       }));
+
+      // 清空该评论的粘贴图片
+      setReplyPastedImages(prev => {
+        const newImages = {...prev};
+        delete newImages[parentIdStr];
+        return newImages;
+      });
 
       // 重新获取评论列表，显示最新评论
       fetchComments();
@@ -810,7 +1068,7 @@ const PostDetail: React.FC = () => {
 
   // 提交评论
   const handleSubmitComment = async () => {
-    if (!commentContent.trim()) {
+    if (!commentContent.trim() && pastedImages.length === 0) {
       message.warning('评论内容不能为空');
       return;
     }
@@ -822,13 +1080,23 @@ const PostDetail: React.FC = () => {
 
     setCommentLoading(true);
     try {
+      // 组合评论内容，包括上传的图片URL
+      let finalContent = commentContent.trim();
+      
+      // 添加图片标签
+      pastedImages.forEach(imageUrl => {
+        finalContent += `\n[img]${imageUrl}[/img]`;
+      });
+      
       await addCommentUsingPost({
         postId: id as unknown as number,
-        content: commentContent,
+        content: finalContent,
       } as any);
 
       message.success('评论成功');
       setCommentContent('');
+      setPastedImages([]); // 清空粘贴的图片
+      
       // 重新获取评论列表，显示最新评论
       setCommentPagination({
         ...commentPagination,
@@ -855,6 +1123,58 @@ const PostDetail: React.FC = () => {
     // 确定当前评论的根评论ID
     const currentRootId = isChild ? rootId : item.id;
 
+    // 处理评论内容中的表情包图片
+    const renderCommentContent = (content?: string) => {
+      if (!content) return '';
+      
+      // 图片标签匹配正则表达式
+      const imgRegex = new RegExp('\\[img\\](.*?)\\[/img\\]', 'g');
+      
+      if (content.match(imgRegex)) {
+        // 如果包含图片标签，需要特殊处理
+        const parts: React.ReactNode[] = [];
+        let lastIndex = 0;
+        let match;
+        
+        while ((match = imgRegex.exec(content)) !== null) {
+          // 添加图片前的文本
+          if (match.index > lastIndex) {
+            parts.push(<span key={`text-${match.index}`}>{content.slice(lastIndex, match.index)}</span>);
+          }
+          
+          // 添加图片
+          const imageUrl = match[1];
+          parts.push(
+            <Image
+              key={`img-${match.index}`}
+              src={imageUrl}
+              alt="表情"
+              className="comment-emoticon"
+              preview={{
+                mask: false,
+              }}
+              style={{ maxHeight: '100px', margin: '2px 0' }}
+            />
+          );
+          
+          lastIndex = match.index + match[0].length;
+        }
+        
+        // 添加剩余的文本
+        if (lastIndex < content.length) {
+          parts.push(<span key={`text-end`}>{content.slice(lastIndex)}</span>);
+        }
+        
+        return <div className="comment-content-with-emoticon">{parts}</div>;
+      }
+      
+      return content;
+    };
+
+    const commentIdStr = item.id?.toString() || '';
+    const commentPastedImages = replyPastedImages[commentIdStr] || [];
+    const isUploading = uploadingReplyImage[commentIdStr];
+    
     return (
       <div className={`comment-item ${isChild ? 'child-comment' : ''}`} key={item.id}>
         <div className="comment-item-avatar">
@@ -883,7 +1203,9 @@ const PostDetail: React.FC = () => {
                 回复 <Text strong>{item.parentComment.user?.userName}</Text>:
               </div>
             )}
-            <Paragraph ellipsis={{ rows: 20, expandable: true, symbol: '展开' }}>{item.content}</Paragraph>
+            <Paragraph ellipsis={{ rows: 20, expandable: true, symbol: '展开' }}>
+              {renderCommentContent(item.content)}
+            </Paragraph>
           </div>
           <div className="comment-item-actions">
             <Button
@@ -921,8 +1243,40 @@ const PostDetail: React.FC = () => {
                     updateReplyContent(item.id || 0, '');
                   }
                 }}
+                onPaste={(e) => handleReplyPaste(item.id || 0, e)}
                 className="reply-textarea"
+                disabled={isUploading}
               />
+              
+              {isUploading && (
+                <div className="uploading-indicator">
+                  <LoadingOutlined spin /> 正在上传图片...
+                </div>
+              )}
+              
+              {/* 粘贴图片预览 */}
+              {commentPastedImages.length > 0 && (
+                <div className="pasted-images-preview">
+                  {commentPastedImages.map((imageUrl, index) => (
+                    <div key={index} className="pasted-image-item">
+                      <Image 
+                        src={imageUrl} 
+                        alt="粘贴图片" 
+                        className="pasted-image"
+                        preview={{mask: false}}
+                      />
+                      <Button
+                        type="text"
+                        danger
+                        icon={<CloseCircleOutlined />}
+                        className="remove-image-btn"
+                        onClick={() => handleRemoveReplyImage(item.id || 0, index)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+              
               <div className="reply-actions">
                 <Button
                   size="small"
@@ -930,13 +1284,49 @@ const PostDetail: React.FC = () => {
                 >
                   取消
                 </Button>
+                <Popover
+                  content={
+                    <div className="emoji-picker">
+                      <Picker
+                        data={data}
+                        i18n={zhData}
+                        onEmojiSelect={(emoji: any) => handleReplyEmojiClick(item.id || 0, emoji)}
+                        theme="light"
+                        locale="zh"
+                        previewPosition="none"
+                        skinTonePosition="none"
+                      />
+                    </div>
+                  }
+                  trigger="click"
+                  placement="topLeft"
+                  overlayClassName="emoji-popover"
+                >
+                  <Button
+                    size="small"
+                    icon={<SmileOutlined />}
+                    className="emoji-button"
+                  />
+                </Popover>
+                <Popover
+                  content={<EmoticonPicker onSelect={(url) => handleReplyEmoticonSelect(item.id || 0, url)} />}
+                  trigger="click"
+                  placement="topLeft"
+                  overlayClassName="emoticon-popover"
+                >
+                  <Button
+                    size="small"
+                    icon={<PictureOutlined />}
+                    className="emoticon-button"
+                  />
+                </Popover>
                 <Button
                   type="primary"
                   size="small"
                   icon={<SendOutlined/>}
                   loading={item.replyLoading}
                   onClick={() => handleSubmitReply(item.id || 0, currentRootId)}
-                  disabled={!item.replyContent?.trim()}
+                  disabled={(!item.replyContent?.trim() && commentPastedImages.length === 0) || isUploading}
                 >
                   回复
                 </Button>
@@ -1095,6 +1485,310 @@ const PostDetail: React.FC = () => {
     }
   }, [id, commentPagination.current]);
 
+  // 处理表情包选择
+  const handleEmoticonSelect = (url: string) => {
+    // 直接提交表情图片评论，不在输入框显示图片代码
+    setIsEmoticonPickerVisible(false);
+    
+    // 检查当前用户是否登录
+    if (!currentUser) {
+      message.warning('请先登录');
+      return;
+    }
+    
+    if (!id) return;
+    
+    // 直接提交评论
+    setCommentLoading(true);
+    addCommentUsingPost({
+      postId: id as unknown as number,
+      content: `[img]${url}[/img]`,
+    } as any).then(() => {
+      message.success('评论成功');
+      // 重新获取评论列表，显示最新评论
+      setCommentPagination({
+        ...commentPagination,
+        current: 1 // 重置到第一页以查看新评论
+      });
+      fetchComments();
+      
+      // 更新帖子的评论数
+      if (post) {
+        setPost({
+          ...post,
+          commentNum: (post.commentNum || 0) + 1
+        });
+      }
+    }).catch(() => {
+      message.error('评论失败');
+    }).finally(() => {
+      setCommentLoading(false);
+    });
+  };
+
+  // 处理 emoji 选择
+  const handleEmojiClick = (emoji: EmojiData) => {
+    setCommentContent((prev) => prev + emoji.native);
+    setIsEmojiPickerVisible(false);
+    // 让输入框获得焦点
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+  };
+
+  const emojiPickerContent = (
+    <div className="emoji-picker">
+      <Picker
+        data={data}
+        i18n={zhData}
+        onEmojiSelect={handleEmojiClick}
+        theme="light"
+        locale="zh"
+        previewPosition="none"
+        skinTonePosition="none"
+      />
+    </div>
+  );
+
+  // 处理回复中的表情包选择
+  const handleReplyEmoticonSelect = (commentId: number | string, url: string) => {
+    // 关闭表情选择器
+    setIsEmoticonPickerVisible(false);
+    
+    if (!currentUser) {
+      message.warning('请先登录');
+      return;
+    }
+    
+    if (!id) return;
+    
+    // 查找评论信息，获取根评论ID
+    const parentId = typeof commentId === 'number' || typeof commentId === 'string' ? commentId : 0;
+    let rootId: number | string | null = null;
+    
+    // 遍历评论列表查找父评论和根评论信息
+    for (const comment of comments) {
+              // 如果是根评论
+        if (comment.id === commentId) {
+          rootId = comment.id || null;
+          break;
+        }
+        
+        // 检查子评论
+        if (comment.children && comment.children.length > 0) {
+          const child = comment.children.find(c => c.id === commentId);
+          if (child) {
+            rootId = comment.id || null;
+            break;
+          }
+        }
+        
+        // 检查预览子评论
+        if (comment.previewChildren && comment.previewChildren.length > 0) {
+          const child = comment.previewChildren.find(c => c.id === commentId);
+          if (child) {
+            rootId = comment.id || null;
+            break;
+          }
+        }
+    }
+    
+    // 确保rootId有效，如果没有提供，则使用parentId作为rootId
+    const finalRootId = rootId || parentId;
+    
+    // 更新评论的加载状态
+    setComments(comments.map(comment => {
+      if (comment.id === parentId) {
+        return {
+          ...comment,
+          replyLoading: true
+        };
+      }
+      if (comment.children) {
+        return {
+          ...comment,
+          children: comment.children.map(child => {
+            if (child.id === parentId) {
+              return {
+                ...child,
+                replyLoading: true
+              };
+            }
+            return child;
+          })
+        };
+      }
+      if (comment.previewChildren) {
+        return {
+          ...comment,
+          previewChildren: comment.previewChildren.map(child => {
+            if (child.id === parentId) {
+              return {
+                ...child,
+                replyLoading: true
+              };
+            }
+            return child;
+          })
+        };
+      }
+      return comment;
+    }));
+    
+    // 直接提交回复
+    addCommentUsingPost({
+      postId: id as unknown as number,
+      content: `[img]${url}[/img]`,
+      parentId: Number(parentId),
+      rootId: finalRootId !== null ? Number(finalRootId) : undefined
+    } as any).then(() => {
+      message.success('回复成功');
+      
+      // 清空回复框并隐藏
+      setComments(comments.map(comment => {
+        if (comment.id === parentId) {
+          return {
+            ...comment,
+            replyContent: '',
+            showReplyBox: false,
+            replyLoading: false
+          };
+        }
+        if (comment.children) {
+          return {
+            ...comment,
+            children: comment.children.map(child => {
+              if (child.id === parentId) {
+                return {
+                  ...child,
+                  replyContent: '',
+                  showReplyBox: false,
+                  replyLoading: false
+                };
+              }
+              return child;
+            })
+          };
+        }
+        if (comment.previewChildren) {
+          return {
+            ...comment,
+            previewChildren: comment.previewChildren.map(child => {
+              if (child.id === parentId) {
+                return {
+                  ...child,
+                  replyContent: '',
+                  showReplyBox: false,
+                  replyLoading: false
+                };
+              }
+              return child;
+            })
+          };
+        }
+        return comment;
+      }));
+      
+      // 重新获取评论列表，显示最新评论
+      fetchComments();
+      
+      // 更新帖子的评论数
+      if (post) {
+        setPost({
+          ...post,
+          commentNum: (post.commentNum || 0) + 1
+        });
+      }
+    }).catch(() => {
+      message.error('回复失败');
+      
+      // 重置加载状态
+      setComments(comments.map(comment => {
+        if (comment.id === parentId) {
+          return {
+            ...comment,
+            replyLoading: false
+          };
+        }
+        if (comment.children) {
+          return {
+            ...comment,
+            children: comment.children.map(child => {
+              if (child.id === parentId) {
+                return {
+                  ...child,
+                  replyLoading: false
+                };
+              }
+              return child;
+            })
+          };
+        }
+        if (comment.previewChildren) {
+          return {
+            ...comment,
+            previewChildren: comment.previewChildren.map(child => {
+              if (child.id === parentId) {
+                return {
+                  ...child,
+                  replyLoading: false
+                };
+              }
+              return child;
+            })
+          };
+        }
+        return comment;
+      }));
+    });
+  };
+
+  // 处理回复中的 emoji 选择
+  const handleReplyEmojiClick = (commentId: number | string, emoji: EmojiData) => {
+    // 更新对应评论的回复内容
+    setComments(comments.map(comment => {
+      if (comment.id === commentId) {
+        return {
+          ...comment,
+          replyContent: (comment.replyContent || '') + emoji.native
+        };
+      }
+      // 检查子评论
+      if (comment.children && comment.children.length > 0) {
+        const updatedChildren = comment.children.map(child => {
+          if (child.id === commentId) {
+            return {
+              ...child,
+              replyContent: (child.replyContent || '') + emoji.native
+            };
+          }
+          return child;
+        });
+        return {
+          ...comment,
+          children: updatedChildren
+        };
+      }
+      // 检查预览子评论
+      if (comment.previewChildren && comment.previewChildren.length > 0) {
+        const updatedPreviewChildren = comment.previewChildren.map(child => {
+          if (child.id === commentId) {
+            return {
+              ...child,
+              replyContent: (child.replyContent || '') + emoji.native
+            };
+          }
+          return child;
+        });
+        return {
+          ...comment,
+          previewChildren: updatedPreviewChildren
+        };
+      }
+      return comment;
+    }));
+  };
+
   if (loading) {
     return (
       <div className="post-detail-loading">
@@ -1241,21 +1935,84 @@ const PostDetail: React.FC = () => {
                     </div>
                     <div className="comment-input">
                       <TextArea
-                        placeholder="写下你的评论..."
+                        placeholder={uploadingImage ? "正在上传图片..." : "写下你的评论或粘贴图片..."}
                         autoSize={{minRows: 2, maxRows: 6}}
                         value={commentContent}
                         onChange={(e) => setCommentContent(e.target.value)}
                         className="comment-textarea"
+                        ref={commentTextareaRef}
+                        onPaste={handlePaste}
+                        disabled={uploadingImage}
                       />
-                      <Button
-                        type="primary"
-                        icon={<SendOutlined/>}
-                        onClick={handleSubmitComment}
-                        loading={commentLoading}
-                        disabled={!commentContent.trim()}
-                      >
-                        发布评论
-                      </Button>
+                      
+                      {uploadingImage && (
+                        <div className="uploading-indicator">
+                          <LoadingOutlined spin /> 正在上传图片...
+                        </div>
+                      )}
+                      
+                      {/* 粘贴图片预览 */}
+                      {pastedImages.length > 0 && (
+                        <div className="pasted-images-preview">
+                          {pastedImages.map((imageUrl, index) => (
+                            <div key={index} className="pasted-image-item">
+                              <Image 
+                                src={imageUrl} 
+                                alt="粘贴图片" 
+                                className="pasted-image"
+                                preview={{mask: false}}
+                              />
+                              <Button
+                                type="text"
+                                danger
+                                icon={<CloseCircleOutlined />}
+                                className="remove-image-btn"
+                                onClick={() => handleRemoveImage(index)}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <div className="comment-toolbar">
+                        <Popover
+                          content={emojiPickerContent}
+                          trigger="click"
+                          visible={isEmojiPickerVisible}
+                          onVisibleChange={setIsEmojiPickerVisible}
+                          placement="topLeft"
+                          overlayClassName="emoji-popover"
+                        >
+                          <Button
+                            type="text"
+                            icon={<SmileOutlined />}
+                            className="emoji-button"
+                          />
+                        </Popover>
+                        <Popover
+                          content={<EmoticonPicker onSelect={handleEmoticonSelect} />}
+                          trigger="click"
+                          visible={isEmoticonPickerVisible}
+                          onVisibleChange={setIsEmoticonPickerVisible}
+                          placement="topLeft"
+                          overlayClassName="emoticon-popover"
+                        >
+                          <Button
+                            type="text"
+                            icon={<PictureOutlined />}
+                            className="emoticon-button"
+                          />
+                        </Popover>
+                        <Button
+                          type="primary"
+                          icon={<SendOutlined/>}
+                          onClick={handleSubmitComment}
+                          loading={commentLoading}
+                          disabled={(!commentContent.trim() && pastedImages.length === 0) || uploadingImage}
+                        >
+                          发布评论
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

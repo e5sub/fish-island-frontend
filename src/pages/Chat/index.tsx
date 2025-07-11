@@ -1616,7 +1616,7 @@ const ChatRoom: React.FC = () => {
 
     switch (level) {
       case 12:
-        tagText = '摸鱼祖师';
+        tagText = '摸鱼皇帝';
         tagEmoji = '🔱';
         tagClass = styles.levelTagGrandMaster;
         break;

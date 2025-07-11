@@ -63,6 +63,7 @@ interface ReaderSettings {
   speechPitch?: number; // 音调
   speechVolume?: number; // 音量
   ttsEnabled?: boolean; // 是否启用朗读功能
+  paragraphIndent?: number; // 段前空格数
 }
 
 // 定义一个主题接口
@@ -96,7 +97,8 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   speechRate: 1, // 默认语速
   speechPitch: 1, // 默认音调
   speechVolume: 1, // 默认音量
-  ttsEnabled: false // 默认不启用朗读功能
+  ttsEnabled: false, // 默认不启用朗读功能
+  paragraphIndent: 2 // 默认段前空格数
 };
 
 // 预定义主题列表
@@ -1811,11 +1813,20 @@ const handlePictureInPicture = async () => {
         
         // 始终使用最新的章节内容引用
         const currentChapterContent = chapterContentRef.current;
+        // 获取缩进em数
+        const indentEm = settings.paragraphIndent !== undefined ? settings.paragraphIndent : 2;
         if (currentChapterContent) {
-          currentChapterContent.split('\n').forEach((paragraph) => {
+          currentChapterContent.split('\n').forEach((paragraph, idx) => {
             if (paragraph.trim()) {
+              // 去除所有前导空格
+              let cleanText = paragraph.replace(/^[\s\u3000]+/, '');
               const p = document.createElement('p');
-              p.textContent = paragraph;
+              p.textContent = cleanText;
+              p.style.textIndent = `${indentEm}em`;
+              p.style.margin = '0.5em 0';
+              p.style.padding = '3px 0';
+              p.style.borderRadius = '3px';
+              p.style.transition = 'background-color 0.3s';
               content.appendChild(p);
             } else {
               content.appendChild(document.createElement('br'));
@@ -2296,6 +2307,17 @@ const renderSettingsPanel = () => {
                 onChange={(value) => saveSettings({ ...settings, fontFamily: value })}
                 style={{ width: '100%' }}
                 options={FONT_FAMILIES}
+              />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 8, fontWeight: 'bold' }}>段前缩进：{settings.paragraphIndent !== undefined ? settings.paragraphIndent : 2} 空格</div>
+              <Slider
+                min={0}
+                max={4}
+                step={1}
+                value={settings.paragraphIndent !== undefined ? settings.paragraphIndent : 2}
+                onChange={(value) => saveSettings({ ...settings, paragraphIndent: value })}
               />
             </div>
             
@@ -2886,31 +2908,36 @@ const renderContent = () => {
       </div>
     );
   }
-  
+  // 只用 text-indent，不加全角空格
+  const indentEm = settings.paragraphIndent !== undefined ? settings.paragraphIndent : 2;
   return (
     <>
       <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>
         {book.chapters[chapterIndex]?.title || `第${chapterIndex + 1}章`}
       </h2>
       <div>
-        {paragraphs.map((paragraph, index) => (
-          <p
-            key={index}
-            id={`paragraph-${index}`}
-            onClick={() => handleParagraphClick(index)}
-            style={{
-              textIndent: '2em',
-              margin: '0.5em 0',
-              padding: '3px 0',
-              cursor: settings.ttsEnabled && (isSpeaking || speechSynthesisRef.current?.paused) ? 'pointer' : 'text',
-              backgroundColor: currentHighlightedIndex === index ? '#fffbe6' : 'transparent',
-              borderRadius: '3px',
-              transition: 'background-color 0.3s'
-            }}
-          >
-            {paragraph}
-          </p>
-        ))}
+        {paragraphs.map((paragraph, index) => {
+          // 去除所有前导空格
+          let cleanText = paragraph.replace(/^[\s\u3000]+/, '');
+          return (
+            <p
+              key={index}
+              id={`paragraph-${index}`}
+              onClick={() => handleParagraphClick(index)}
+              style={{
+                textIndent: `${indentEm}em`,
+                margin: '0.5em 0',
+                padding: '3px 0',
+                cursor: settings.ttsEnabled && (isSpeaking || speechSynthesisRef.current?.paused) ? 'pointer' : 'text',
+                backgroundColor: currentHighlightedIndex === index ? '#fffbe6' : 'transparent',
+                borderRadius: '3px',
+                transition: 'background-color 0.3s'
+              }}
+            >
+              {cleanText}
+            </p>
+          );
+        })}
       </div>
     </>
   );
