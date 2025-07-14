@@ -548,6 +548,7 @@ declare namespace API {
   };
 
   type DrawRoomCreateRequest = {
+    creatorOnlyMode?: boolean;
     maxPlayers?: number;
     totalRounds?: number;
   };
@@ -558,6 +559,7 @@ declare namespace API {
     creatorAvatar?: string;
     creatorId?: number;
     creatorName?: string;
+    creatorOnlyMode?: boolean;
     currentDrawerId?: number;
     currentDrawerName?: string;
     currentPlayers?: number;

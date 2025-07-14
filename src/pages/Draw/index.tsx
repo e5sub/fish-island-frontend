@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { PageContainer } from '@ant-design/pro-components';
-import { Card, List, Button, Typography, Space, Badge, Input, Modal, Form, message, Empty, Avatar, Tooltip, Tag, Row, Col, Divider } from 'antd';
-import { SearchOutlined, PlusOutlined, UserOutlined, TeamOutlined, ClockCircleOutlined, InfoCircleOutlined, ReloadOutlined } from '@ant-design/icons';
-import { getAllRoomsUsingGet, createRoomUsingPost, joinRoomUsingPost, getRoomByIdUsingGet } from '@/services/backend/drawGameController';
+import { Card, List, Button, Typography, Space, Badge, Input, Modal, Form, message, Empty, Avatar, Tooltip, Tag, Row, Col, Divider, Switch, Popconfirm, Radio, InputNumber } from 'antd';
+import { SearchOutlined, PlusOutlined, UserOutlined, TeamOutlined, ClockCircleOutlined, InfoCircleOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
+import { getAllRoomsUsingGet, createRoomUsingPost, joinRoomUsingPost, getRoomByIdUsingGet, removeRoomUsingPost } from '@/services/backend/drawGameController';
 import { useModel, history } from '@umijs/max';
 import './index.less';
 
@@ -26,6 +26,7 @@ const DrawRoomPage: React.FC = () => {
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [createRoomVisible, setCreateRoomVisible] = useState(false);
+  const [customRounds, setCustomRounds] = useState<boolean>(false);
 
   const [form] = Form.useForm();
 
@@ -59,6 +60,25 @@ const DrawRoomPage: React.FC = () => {
     room.wordHint?.toLowerCase().includes(searchKeyword.toLowerCase()))
   );
 
+  // 判断当前用户是否是管理员
+  const isAdmin = currentUser?.userRole === 'admin';
+
+  // 删除房间
+  const handleRemoveRoom = async (roomId: string) => {
+    try {
+      const res = await removeRoomUsingPost({ roomId });
+      if (res.data && res.code === 0) {
+        message.success('房间删除成功');
+        fetchRooms(); // 刷新房间列表
+      } else {
+        message.error(res.message || '删除房间失败');
+      }
+    } catch (error) {
+      console.error('删除房间出错:', error);
+      message.error('删除房间失败，请稍后再试');
+    }
+  };
+
   // 计算房间剩余时间
   const getRemainingTime = (room: RoomItem) => {
     if (!room.roundEndTime) return null;
@@ -76,12 +96,14 @@ const DrawRoomPage: React.FC = () => {
       const res = await createRoomUsingPost({
         maxPlayers: values.maxPlayers,
         totalRounds: values.totalRounds || 3,
+        creatorOnlyMode: !values.creatorOnlyMode,
       });
 
       if (res.data && res.code === 0) {
         message.success('创建房间成功');
         setCreateRoomVisible(false);
         form.resetFields();
+        setCustomRounds(false);
 
         // 创建完后直接进入房间
         history.push(`/draw/${res.data}`);
@@ -198,6 +220,12 @@ const DrawRoomPage: React.FC = () => {
                       return currentUserId === playerUserId;
                     });
 
+                  // 判断当前用户是否是房主
+                  const isRoomCreator = currentUser && room.creatorId === currentUser.id;
+                  
+                  // 判断用户是否可以删除房间（房主或管理员）
+                  const canDeleteRoom = isRoomCreator || isAdmin;
+
 
                   return (
                     <List.Item
@@ -216,11 +244,26 @@ const DrawRoomPage: React.FC = () => {
                           }}
                           className={`join-button ${isUserInRoom ? 'join-button-detail' :
                             (room.status === 'WAITING' ? 'join-button-waiting' : 'join-button-playing')}`}
-                          disabled={!isUserInRoom && isRoomFull}
                         >
                           {isUserInRoom ? '查看详情' : (room.status === 'WAITING' ? '加入' : '观战')}
-                        </Button>
-                      ]}
+                        </Button>,
+                        canDeleteRoom && (
+                          <Popconfirm
+                            title="确定要删除该房间吗？"
+                            onConfirm={() => handleRemoveRoom(room.roomId!)}
+                            okText="确定"
+                            cancelText="取消"
+                          >
+                            <Button
+                              danger
+                              icon={<DeleteOutlined />}
+                              size="middle"
+                            >
+                              删除
+                            </Button>
+                          </Popconfirm>
+                        )
+                      ].filter(Boolean)}
                     >
                       <List.Item.Meta
                         avatar={
@@ -336,7 +379,10 @@ const DrawRoomPage: React.FC = () => {
       <Modal
         title={<div className="create-room-title">创建你画我猜房间</div>}
         open={createRoomVisible}
-        onCancel={() => setCreateRoomVisible(false)}
+        onCancel={() => {
+          setCreateRoomVisible(false);
+          setCustomRounds(false);
+        }}
         footer={null}
         className="create-room-modal"
         width={420}
@@ -349,6 +395,7 @@ const DrawRoomPage: React.FC = () => {
           initialValues={{
             maxPlayers: 8,
             totalRounds: 6,
+            creatorOnlyMode: true,
           }}
           className="create-room-form"
         >
@@ -369,14 +416,46 @@ const DrawRoomPage: React.FC = () => {
           <Form.Item
             name="totalRounds"
             label={<span className="form-label">游戏轮数</span>}
-            rules={[{ required: true, message: '请输入游戏轮数' }]}
+            rules={[{ required: true, message: '请选择游戏轮数' }]}
           >
-            <Input
-              type="number"
-              min={1}
-              max={20}
-              className="styled-input"
-            />
+            <div>
+              <Radio.Group 
+                onChange={(e) => {
+                  if (e.target.value === 'custom') {
+                    setCustomRounds(true);
+                  } else {
+                    setCustomRounds(false);
+                    form.setFieldsValue({ totalRounds: e.target.value });
+                  }
+                }}
+                defaultValue={6}
+              >
+                <Radio.Button value={3}>3轮</Radio.Button>
+                <Radio.Button value={6}>6轮</Radio.Button>
+                <Radio.Button value={8}>8轮</Radio.Button>
+                <Radio.Button value={12}>12轮</Radio.Button>
+                <Radio.Button value="custom">自定义</Radio.Button>
+              </Radio.Group>
+              
+              {customRounds && (
+                <InputNumber 
+                  min={1} 
+                  max={20} 
+                  className="styled-input" 
+                  style={{ marginTop: 8, width: '100%' }}
+                  onChange={(value) => form.setFieldsValue({ totalRounds: value })}
+                  placeholder="请输入轮数(1-20)"
+                />
+              )}
+            </div>
+          </Form.Item>
+
+          <Form.Item
+            name="creatorOnlyMode"
+            label={<span className="form-label">轮换模式</span>}
+            valuePropName="checked"
+          >
+            <Switch />
           </Form.Item>
 
           <Form.Item className="submit-button-container">

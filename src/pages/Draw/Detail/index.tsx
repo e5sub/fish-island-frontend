@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useModel, useParams, history } from '@umijs/max';
 import { PageContainer } from '@ant-design/pro-components';
-import { Card, Input, Button, List, Avatar, message, Typography, Modal, Spin } from 'antd';
-import { SendOutlined, UndoOutlined, ClearOutlined, SaveOutlined, PlayCircleOutlined, StepForwardOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Card, Input, Button, List, Avatar, message, Typography, Modal, Spin, Alert, Tooltip } from 'antd';
+import { SendOutlined, UndoOutlined, ClearOutlined, SaveOutlined, PlayCircleOutlined, StepForwardOutlined, LogoutOutlined, BgColorsOutlined } from '@ant-design/icons';
 import { wsService } from '@/services/websocket';
 import { getRoomByIdUsingGet, guessWordUsingPost, saveDrawDataUsingPost, startGameUsingPost, nextRoundUsingPost, quitRoomUsingPost } from '@/services/backend/drawGameController';
 import './index.less';
@@ -50,6 +50,7 @@ const DrawPage: React.FC = () => {
   const [eraserSize, setEraserSize] = useState(20); // 橡皮擦大小
   const [loading, setLoading] = useState(true);
   const [roomInfo, setRoomInfo] = useState<API.DrawRoomVO | null>(null);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   // 记录绘画操作历史
   const [drawOperations, setDrawOperations] = useState<any[]>([]);
@@ -62,6 +63,9 @@ const DrawPage: React.FC = () => {
   // 添加canvas尺寸状态
   const [canvasSize, setCanvasSize] = useState({ width: 600, height: 400 });
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // 获取房间信息中的提示词
+  const [wordHint, setWordHint] = useState<string>('');
 
   // 判断当前用户是否在房间中
   const isCurrentUserInRoom = () => {
@@ -105,6 +109,19 @@ const DrawPage: React.FC = () => {
 
     return userInRoom;
   };
+  
+  // 添加判断当前用户是否是绘画者的函数
+  const isCurrentUserDrawer = () => {
+    if (!currentUser || !roomInfo) return false;
+    
+    // 判断当前用户是否是当前绘画者
+    return roomInfo.currentDrawerId === currentUser.id;
+  };
+
+  // 添加判断当前用户是否是管理员的函数
+  const isCurrentUserAdmin = () => {
+    return currentUser?.userRole === 'admin';
+  };
 
   // 获取房间信息
   useEffect(() => {
@@ -118,6 +135,11 @@ const DrawPage: React.FC = () => {
             // 设置房间相关状态
             setCurrentWord(res.data.currentWord || '');
             setRoomUsers(res.data.participants || []);
+            
+            // 设置提示词
+            if (res.data.wordHint) {
+              setWordHint(res.data.wordHint);
+            }
 
             // 判断当前用户是否是房主
             if (currentUser && res.data.creatorId === currentUser.id) {
@@ -280,6 +302,20 @@ const DrawPage: React.FC = () => {
       }
     });
 
+    // 处理清空画布消息
+    wsService.addMessageHandler('clearDraw', (data) => {
+      // 检查消息中的房间ID是否与当前房间ID匹配
+      if (data.data && data.data === roomId && canvasRef.current) {
+        // 无论是否为绘画者，都清空画布
+        const ctx = canvasRef.current.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          drawingHistoryRef.current = [];
+          message.info('画布已被清空');
+        }
+      }
+    });
+
     // 处理用户加入/离开消息
     wsService.addMessageHandler('user_event', (data) => {
       if (data.data.action === 'join') {
@@ -298,6 +334,9 @@ const DrawPage: React.FC = () => {
       }
       if (data.data.roundTime) {
         setRoundTime(data.data.roundTime);
+      }
+      if (data.data.wordHint) {
+        setWordHint(data.data.wordHint);
       }
     });
 
@@ -319,20 +358,27 @@ const DrawPage: React.FC = () => {
               } else {
                 setCurrentWord(res.data.currentWord || '');
               }
-
-              // 更新房主状态
-              if (currentUser) {
-                setIsRoomOwner(
-                  res.data.creatorId === currentUser.id ||
-                  res.data.currentDrawerId === currentUser.id
-                );
+              
+              // 更新提示词
+              if (res.data.wordHint && res.data.wordHint !== wordHint) {
+                setWordHint(res.data.wordHint);
+                message.info(`当前提示已更新: ${res.data.wordHint}`);
+              } else {
+                setWordHint(res.data.wordHint || '');
               }
 
               // 更新房间信息状态
               setRoomInfo(res.data);
+              
+              // 判断当前用户是否是房主
+              if (currentUser && res.data.creatorId === currentUser.id) {
+                setIsRoomOwner(true);
+              } else {
+                setIsRoomOwner(res.data.currentDrawerId === currentUser?.id);
+              }
 
-              // 更新画布数据
-              if (res.data.drawData && canvasRef.current) {
+              // 只有非绘画者才更新画布数据
+              if (!isCurrentUserDrawer() && res.data.drawData && canvasRef.current) {
                 const canvas = canvasRef.current;
                 const img = new Image();
                 img.onload = () => {
@@ -345,7 +391,6 @@ const DrawPage: React.FC = () => {
                     // 保存当前状态到历史记录
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     drawingHistoryRef.current = [imageData];
-
                   }
                 };
                 // 设置图片源为base64数据
@@ -369,7 +414,7 @@ const DrawPage: React.FC = () => {
     return () => {
       wsService.clearMessageHandlers();
     };
-  }, [isRoomOwner, currentWord, roomId]);
+  }, [isCurrentUserDrawer, currentWord, wordHint, roomId]);
 
   // 自动滚动聊天到底部
   useEffect(() => {
@@ -417,7 +462,7 @@ const DrawPage: React.FC = () => {
 
   // Canvas事件处理 - 修复坐标计算
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isRoomOwner || !canvasRef.current) return;
+    if (!isCurrentUserDrawer() || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -481,7 +526,7 @@ const DrawPage: React.FC = () => {
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !isRoomOwner || !canvasRef.current) return;
+    if (!isDrawing || !isCurrentUserDrawer() || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -514,7 +559,7 @@ const DrawPage: React.FC = () => {
 
   // 添加触摸设备支持
   const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isRoomOwner || !canvasRef.current) return;
+    if (!isCurrentUserDrawer() || !canvasRef.current) return;
     e.preventDefault(); // 防止页面滚动
 
     const canvas = canvasRef.current;
@@ -579,7 +624,7 @@ const DrawPage: React.FC = () => {
   };
 
   const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !isRoomOwner || !canvasRef.current) return;
+    if (!isDrawing || !isCurrentUserDrawer() || !canvasRef.current) return;
     e.preventDefault(); // 防止页面滚动
 
     const canvas = canvasRef.current;
@@ -613,13 +658,13 @@ const DrawPage: React.FC = () => {
   };
 
   const handleCanvasMouseUp = () => {
-    if (!isDrawing || !isRoomOwner) return;
+    if (!isDrawing || !isCurrentUserDrawer()) return;
     setIsDrawing(false);
   };
 
   // 撤销上一步
   const handleUndo = () => {
-    if (!canvasRef.current || drawingHistoryRef.current.length === 0) return;
+    if (!canvasRef.current || drawingHistoryRef.current.length === 0 || !isCurrentUserDrawer()) return;
 
     const ctx = canvasRef.current.getContext('2d');
     if (ctx) {
@@ -639,7 +684,7 @@ const DrawPage: React.FC = () => {
 
   // 清空画布
   const handleClear = () => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || !isCurrentUserDrawer()) return;
 
     const ctx = canvasRef.current.getContext('2d');
     if (ctx) {
@@ -657,7 +702,7 @@ const DrawPage: React.FC = () => {
 
   // 保存画布并上传
   const handleSave = () => {
-    if (!canvasRef.current || !roomId) return;
+    if (!canvasRef.current || !roomId || !isCurrentUserDrawer()) return;
 
     const canvas = canvasRef.current;
 
@@ -829,6 +874,53 @@ const DrawPage: React.FC = () => {
     });
   };
 
+  // 添加倒计时定时器
+  const [displayTime, setDisplayTime] = useState<number>(60);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 处理倒计时
+  useEffect(() => {
+    // 清除之前的定时器
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    // 设置初始显示时间
+    setDisplayTime(roundTime);
+
+    // 如果游戏正在进行且有剩余时间，开始倒计时
+    if (roomInfo?.status === 'PLAYING' && roundTime > 0) {
+      timerRef.current = setInterval(() => {
+        setDisplayTime(prevTime => {
+          const newTime = prevTime - 1;
+          if (newTime <= 0) {
+            // 时间到，清除定时器
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+            return 0;
+          }
+          return newTime;
+        });
+      }, 1000);
+    }
+
+    // 组件卸载时清除定时器
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [roundTime, roomInfo?.status]);
+
+  // 处理自定义颜色选择
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setColor(e.target.value);
+  };
+
   if (loading) {
     return (
       <PageContainer>
@@ -848,47 +940,59 @@ const DrawPage: React.FC = () => {
             <Card
               title={
                 <div className="canvas-header">
-                  <span>{isRoomOwner ? "你是绘画者" : "猜词环节"}</span>
-                  {isRoomOwner && (
-                    <div className="word-display">
-                      当前词语: <Text strong>{currentWord || '(未设置)'}</Text>
+                  <span>{isCurrentUserDrawer() ? "你是绘画者" : "猜词环节"}</span>
+                  
+                  {/* 提示词显示 */}
+                  {roomInfo?.status === 'PLAYING' && (
+                    <div className="word-hint-display">
+                      <span className="word-hint-label">
+                        {isCurrentUserDrawer() ? "当轮词语:" : "当轮提示词:"}
+                      </span>
+                      <Text strong className="word-hint-text">
+                        {isCurrentUserDrawer() ? currentWord : (wordHint || '等待提示...')}
+                      </Text>
+                      {displayTime > 0 && (
+                        <span className={`timer ${displayTime <= 10 ? 'timer-warning' : ''}`}>
+                          {displayTime}秒
+                        </span>
+                      )}
                     </div>
                   )}
 
-                  {/* 添加开始游戏按钮，仅对房主显示，且仅在等待状态下显示 */}
-                  {isRoomOwner && roomInfo?.status === 'WAITING' && roomInfo?.participants && roomInfo.participants.length > 0 && (
-                    <Button
-                      type="primary"
-                      icon={<PlayCircleOutlined />}
-                      onClick={handleStartGame}
-                      className="start-game-btn"
-                    >
-                      开始游戏
-                    </Button>
-                  )}
+                  {/* 游戏控制按钮 */}
+                  <div className="game-controls">
+                    {isRoomOwner && roomInfo?.status === 'WAITING' && roomInfo?.participants && roomInfo.participants.length > 0 && (
+                      <Button
+                        type="primary"
+                        icon={<PlayCircleOutlined />}
+                        onClick={handleStartGame}
+                        size="small"
+                      >
+                        开始游戏
+                      </Button>
+                    )}
 
-                  {isRoomOwner && roomInfo?.status === 'PLAYING' && (
-                    <Button
-                      type="primary"
-                      icon={<StepForwardOutlined />}
-                      onClick={handleNextRound}
-                      className="next-round-btn"
-                      style={{ marginLeft: '8px' }}
-                    >
-                      下一轮
-                    </Button>
-                  )}
+                    {(isRoomOwner || isCurrentUserAdmin()) && roomInfo?.status === 'PLAYING' && (
+                      <Button
+                        type="primary"
+                        icon={<StepForwardOutlined />}
+                        onClick={handleNextRound}
+                        size="small"
+                      >
+                        下一轮
+                      </Button>
+                    )}
 
-                  {/* 添加退出房间按钮 */}
-                  <Button
-                    danger
-                    icon={<LogoutOutlined />}
-                    onClick={handleQuitRoom}
-                    className="quit-room-btn"
-                    style={{ marginLeft: '8px' }}
-                  >
-                    退出房间
-                  </Button>
+                    {/* 添加退出房间按钮 */}
+                    <Button
+                      danger
+                      icon={<LogoutOutlined />}
+                      onClick={handleQuitRoom}
+                      size="small"
+                    >
+                      退出房间
+                    </Button>
+                  </div>
                 </div>
               }
               className="draw-canvas-card"
@@ -909,7 +1013,7 @@ const DrawPage: React.FC = () => {
                 />
               </div>
 
-              {isRoomOwner && (
+              {isCurrentUserDrawer() && (
                 <div className="canvas-toolbar">
                   <div className="tool-selector">
                     <Button
@@ -939,7 +1043,31 @@ const DrawPage: React.FC = () => {
                             onClick={() => setColor(c)}
                           />
                         ))}
+                        <Tooltip title="自定义颜色">
+                          <div 
+                            className="color-picker-toggle"
+                            onClick={() => setShowColorPicker(!showColorPicker)}
+                          >
+                            <BgColorsOutlined />
+                          </div>
+                        </Tooltip>
                       </div>
+                      
+                      {showColorPicker && (
+                        <div className="custom-color-picker">
+                          <input
+                            type="color"
+                            value={color}
+                            onChange={handleColorChange}
+                          />
+                          <div 
+                            className="current-color-preview" 
+                            style={{ backgroundColor: color }}
+                          >
+                            {color}
+                          </div>
+                        </div>
+                      )}
 
                       <div className="brush-size-controls">
                         <span>笔触大小:</span>
@@ -1006,7 +1134,7 @@ const DrawPage: React.FC = () => {
 
               <div className="chat-input">
                 <Input
-                  placeholder={isRoomOwner ? "输入聊天内容..." : "输入你的猜测..."}
+                  placeholder={isCurrentUserDrawer() ? "输入聊天内容..." : "输入你的猜测..."}
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onPressEnter={handleSendMessage}
@@ -1032,7 +1160,7 @@ const DrawPage: React.FC = () => {
 
             <Card title="房间成员" className="users-card">
               <List
-                dataSource={roomUsers}
+                dataSource={[...roomUsers].sort((a, b) => (b.score || 0) - (a.score || 0))}
                 renderItem={item => (
                   <List.Item>
                     <List.Item.Meta

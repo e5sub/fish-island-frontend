@@ -1,6 +1,6 @@
 .post-detail-container {
-  padding: 24px;
-  max-width: 1200px;
+  padding: 12px;
+  max-width: 1400px;
   margin: 0 auto;
   overflow-x: hidden; /* 添加这一行防止溢出 */
   width: 100%; /* 确保容器占满可用宽度 */
@@ -29,7 +29,7 @@
 
 .post-detail-layout {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   position: relative;
   min-width: 0;
   /* 删除 overflow-x: auto; 这会导致横向滚动条 */
@@ -55,7 +55,7 @@
 
 @media (max-width: 768px) {
   .post-detail-container {
-    padding: 16px;
+    padding: 8px;
   }
   
   .post-detail-layout {
@@ -70,7 +70,7 @@
 }
 
 .post-detail-sidebar {
-  width: 380px;
+  width: 350px;
   flex: 0 0 auto;
   position: relative;
   transition: all 0.3s ease;
@@ -92,8 +92,8 @@
     margin-right: 0;
     
     .post-detail-comments {
-      width: 380px;
-      transform: translateX(-380px);
+      width: 350px;
+      transform: translateX(-350px);
       opacity: 0;
       visibility: hidden;
       border: none;
@@ -156,9 +156,10 @@
 }
 
 .post-detail-card {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   overflow-wrap: break-word;
   word-wrap: break-word;
+  padding: 16px;
 }
 
 .post-detail-title {
