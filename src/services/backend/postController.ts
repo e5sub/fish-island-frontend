@@ -104,6 +104,21 @@ export async function listPostVoByPageUsingPost(
   });
 }
 
+/** 分页获取当前用户收藏的帖子 POST /api/post/my/favour/list/page/vo */
+export async function listMyFavourPostVoByPageUsingPost(
+  body: API.PostQueryRequest,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponsePagePostVO_>('/api/post/my/favour/list/page/vo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
 /** 分页获取当前用户创建的资源列表 POST /api/post/my/list/page/vo */
 export async function listMyPostVoByPageUsingPost(
   body: API.PostQueryRequest,

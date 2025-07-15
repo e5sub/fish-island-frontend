@@ -698,3 +698,26 @@
     color: #1890ff;
   }
 }
+
+.post-author-info {
+  position: relative; /* 创建定位上下文 */
+  flex: 1;
+
+  .featured-image-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+
+    .featured-image {
+      width: 48px;
+      height: 48px;
+
+      @media (max-width: 576px) {
+        width: 32px;
+        height: 32px;
+      }
+    }
+  }
+}
+
