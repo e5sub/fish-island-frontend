@@ -12,6 +12,7 @@ import { wsService } from '@/services/websocket';
 
 // 添加消息类型定义
 interface ChatMessage {
+  roomId: string;
   id: string;
   content: string;
   sender: {
@@ -540,6 +541,7 @@ function App() {
     }
 
     const newMessage: ChatMessage = {
+      roomId: roomId,
       id: `${Date.now()}`,
       content: chatInputValue,
       sender: {

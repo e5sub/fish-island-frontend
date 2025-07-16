@@ -5,6 +5,8 @@ import { SearchOutlined, PlusOutlined, UserOutlined, TeamOutlined, ClockCircleOu
 import { getAllRoomsUsingGet, createRoomUsingPost, joinRoomUsingPost, getRoomByIdUsingGet, removeRoomUsingPost } from '@/services/backend/drawGameController';
 import { useModel, history } from '@umijs/max';
 import './index.less';
+import { wsService } from '@/services/websocket';
+import { a } from 'framer-motion/dist/types.d-DUA-weyD';
 
 const { Title, Text } = Typography;
 
@@ -116,6 +118,70 @@ const DrawRoomPage: React.FC = () => {
     }
   };
 
+  // 添加发送邀请的函数
+  const [hasSentInvitation, setHasSentInvitation] = useState(false);
+  const [invitationCooldown, setInvitationCooldown] = useState(0);
+  
+  const handleSendInvitation = (roomId: string | undefined) => {
+    if (!currentUser?.id) {
+      message.error('请先登录！');
+      return;
+    }
+
+    if (hasSentInvitation) {
+      message.warning('你已经发送过邀请了，请等待60秒后再试');
+      return;
+    }
+
+    // 发送邀请消息到聊天室
+    wsService.send({
+      type: 2,
+      userId: -1,
+      data: {
+        type: 'chat',
+        content: {
+          message: {
+            id: `${Date.now()}`,
+            content: `[invite/draw]${roomId}[/invite]`,
+            sender: {
+              id: String(currentUser.id),
+              name: currentUser.userName || '游客',
+              avatar: currentUser.userAvatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=visitor',
+              level: currentUser.level || 1,
+              isAdmin: currentUser.userRole === 'admin',
+            },
+            timestamp: new Date(),
+          },
+        },
+      },
+    });
+
+    setHasSentInvitation(true);
+    setInvitationCooldown(60);
+    message.success('邀请已发送到聊天室');
+
+    // 设置60秒冷却时间
+    const timer = setInterval(() => {
+      setInvitationCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setHasSentInvitation(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleJoinButtonClick = async (room: RoomItem, isUserInRoom: boolean | undefined)=> {
+    if (isUserInRoom || room.status === 'PLAYING') {
+      // 如果用户已在房间或者是观战模式，直接进入
+      history.push(`/draw/${room.roomId}`);
+    } else {
+      // 否则调用加入房间的方法
+      handleJoinRoom(room);
+    }
+  }
   // 加入房间
   const handleJoinRoom = async (room: RoomItem) => {
     // 如果房间已满
@@ -233,19 +299,19 @@ const DrawRoomPage: React.FC = () => {
                       actions={[
                         <Button
                           type="primary"
-                          onClick={() => {
-                            if (isUserInRoom || room.status === 'PLAYING') {
-                              // 如果用户已在房间或者是观战模式，直接进入
-                              history.push(`/draw/${room.roomId}`);
-                            } else {
-                              // 否则调用加入房间的方法
-                              handleJoinRoom(room);
-                            }
-                          }}
+                          onClick={() => handleJoinButtonClick(room, isUserInRoom)}
                           className={`join-button ${isUserInRoom ? 'join-button-detail' :
                             (room.status === 'WAITING' ? 'join-button-waiting' : 'join-button-playing')}`}
                         >
                           {isUserInRoom ? '查看详情' : (room.status === 'WAITING' ? '加入' : '观战')}
+                        </Button>,
+                        <Button 
+                          type="primary" 
+                          onClick={() => handleSendInvitation(room.roomId)}
+                          disabled={hasSentInvitation}
+                          style={{ display: isRoomCreator ? 'block' : 'none' }}
+                        >
+                          {hasSentInvitation ? `冷却中 (${invitationCooldown}s)` : '发送邀请'}
                         </Button>,
                         canDeleteRoom && (
                           <Popconfirm

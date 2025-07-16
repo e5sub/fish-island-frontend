@@ -689,9 +689,13 @@ const PostPage: React.FC = () => {
 
                         {item.thumbComment && (
                           <div className="post-content hot-comment">
-                            {item.thumbComment.content && item.thumbComment.content.match(/\[img\](.*?)\[\/img\]/i)
-                              ? '【图片】'
-                              : item.thumbComment.content}
+                            {item.thumbComment.content 
+                              ? (item.thumbComment.content.match(/\[img\](.*?)\[\/img\]/i)
+                                ? '【图片】'
+                                : (item.thumbComment.content.length > 50 
+                                  ? `${item.thumbComment.content.substring(0, 50)}...` 
+                                  : item.thumbComment.content))
+                              : ''}
                           </div>
                         )}
                       </div>
@@ -714,7 +718,11 @@ const PostPage: React.FC = () => {
                     count={index + 1}
                     style={{
                       backgroundColor: index < 3 ? '#ff4d4f' : '#999',
-                      marginRight: '8px'
+                      marginRight: '8px',
+                      minWidth: '28px',
+                      height: '28px',
+                      lineHeight: '28px',
+                      borderRadius: '50%',
                     }}
                   />
                   <Link to={item.url || '#'}>{item.title}</Link>

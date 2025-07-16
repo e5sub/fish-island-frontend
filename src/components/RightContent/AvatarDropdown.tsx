@@ -32,10 +32,11 @@ import {
   Switch,
   TimePicker,
   Tooltip,
-  Upload
+  Upload,
+  Badge
 } from 'antd';
 import type {MenuInfo} from 'rc-menu/lib/interface';
-import React, {lazy, useCallback, useEffect, useState} from 'react';
+import React, {lazy, useCallback, useEffect, useRef, useState} from 'react';
 import {flushSync} from 'react-dom';
 import HeaderDropdown from '../HeaderDropdown';
 import {useEmotionCss} from "@ant-design/use-emotion-css";
@@ -46,6 +47,7 @@ import {RcFile} from "antd/lib/upload";
 import LoginRegister from '../LoginRegister';
 import {setNotificationEnabled} from '@/utils/notification';
 import FoodRecommender from '@/components/FoodRecommender';
+import MessageNotification, { MessageNotificationRef } from '@/components/MessageNotification';
 
 lazy(() => import('@/components/MusicPlayer'));
 export type GlobalHeaderRightProps = {
@@ -136,17 +138,17 @@ const compressImage = (file: File): Promise<File> => {
 
 export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu}) => {
   const [bigWeekBaseDate, setBigWeekBaseDate] = useState(() => {
-  const savedData = localStorage.getItem('bigWeekBaseDate');
-  return savedData ? moment(savedData) : moment();
-});
+    const savedData = localStorage.getItem('bigWeekBaseDate');
+    return savedData ? moment(savedData) : moment();
+  });
 
-const calculateCurrentWeekType = (baseDate: moment.Moment) => {
-  const currentDate = moment();
-  const weeksDiff = currentDate.diff(baseDate, 'weeks');
-  return weeksDiff % 2 === 0 ? 'big' : 'small';
-};
+  const calculateCurrentWeekType = (baseDate: moment.Moment) => {
+    const currentDate = moment();
+    const weeksDiff = currentDate.diff(baseDate, 'weeks');
+    return weeksDiff % 2 === 0 ? 'big' : 'small';
+  };
 
-const [moYuData, setMoYuData] = useState<MoYuTimeType>({
+  const [moYuData, setMoYuData] = useState<MoYuTimeType>({
     startTime: moment('08:30', 'HH:mm'),
     endTime: moment('17:30', 'HH:mm'),
     lunchTime: moment('12:00', 'HH:mm'),
@@ -1027,6 +1029,17 @@ const [moYuData, setMoYuData] = useState<MoYuTimeType>({
   }, []);
 
   const [isFoodRecommenderOpen, setIsFoodRecommenderOpen] = useState(false);
+  const messageNotificationRef = useRef<MessageNotificationRef>(null);
+  const [unreadMessageCount, setUnreadMessageCount] = useState<number>(0);
+
+  // 显示消息通知抽屉
+  const showMessageDrawer = (e: React.MouseEvent) => {
+    // 阻止事件冒泡，防止触发下拉菜单
+    e.stopPropagation();
+    if (messageNotificationRef.current) {
+      messageNotificationRef.current.showDrawer();
+    }
+  };
 
   if (!currentUser) {
     return (
@@ -1388,6 +1401,10 @@ const [moYuData, setMoYuData] = useState<MoYuTimeType>({
         />
       </Tooltip>
 
+      {/* 消息通知组件 */}
+      <MessageNotification ref={messageNotificationRef} onUnreadCountChange={setUnreadMessageCount} />
+
+      {/* 合并头像和下拉菜单 */}
       <HeaderDropdown
         menu={{
           selectedKeys: [],
@@ -1396,29 +1413,34 @@ const [moYuData, setMoYuData] = useState<MoYuTimeType>({
         }}
       >
         <Space>
-          <div style={{position: 'relative'}}>
-            {currentUser?.userAvatar ? (
-              <div style={{position: 'relative'}}>
-                <Avatar size="default" src={currentUser?.userAvatar}/>
-                {currentUser?.avatarFramerUrl && (
-                  <img
-                    src={currentUser.avatarFramerUrl}
-                    style={{
-                      position: 'absolute',
-                      top: '-8px',
-                      left: '-8px',
-                      width: 'calc(100% + 16px)',
-                      height: 'calc(100% + 16px)',
-                      pointerEvents: 'none'
-                    }}
-                    alt="头像框"
-                  />
-                )}
-              </div>
-            ) : (
-              <Avatar size="default" icon={<UserOutlined/>}/>
-            )}
+          {/* 头像 - 点击显示消息通知 */}
+          <div onClick={showMessageDrawer} style={{ cursor: 'pointer', position: 'relative' }}>
+            <Badge count={unreadMessageCount} size="small" offset={[-2, 2]}>
+              {currentUser?.userAvatar ? (
+                <div style={{position: 'relative'}}>
+                  <Avatar size="default" src={currentUser?.userAvatar}/>
+                  {currentUser?.avatarFramerUrl && (
+                    <img
+                      src={currentUser.avatarFramerUrl}
+                      style={{
+                        position: 'absolute',
+                        top: '-8px',
+                        left: '-8px',
+                        width: 'calc(100% + 16px)',
+                        height: 'calc(100% + 16px)',
+                        pointerEvents: 'none'
+                      }}
+                      alt="头像框"
+                    />
+                  )}
+                </div>
+              ) : (
+                <Avatar size="default" icon={<UserOutlined/>}/>
+              )}
+            </Badge>
           </div>
+
+          {/* 用户名 */}
           <Tooltip title={currentUser?.userName ?? '无名'}>
             <span style={{
               maxWidth: '80px',
@@ -1426,7 +1448,7 @@ const [moYuData, setMoYuData] = useState<MoYuTimeType>({
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               display: 'inline-block',
-              verticalAlign: 'middle'
+              verticalAlign: 'middle',
             }}>
               {currentUser?.userName?.length > 5 ? `${currentUser.userName.slice(0, 5)}...` : (currentUser?.userName ?? '无名')}
             </span>

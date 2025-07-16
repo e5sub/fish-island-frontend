@@ -58,6 +58,7 @@ import { FixedSizeList as List } from 'react-window';
 import styles from './index.less';
 import { UNDERCOVER_NOTIFICATION, UNDERCOVER_ROOM_STATUS } from '@/constants';
 import eventBus from '@/utils/eventBus';
+import { joinRoomUsingPost } from '@/services/backend/drawGameController';
 
 interface Message {
   id: string;
@@ -1766,7 +1767,7 @@ const ChatRoom: React.FC = () => {
   };
 
   // 修改 handleInviteClick 函数
-  const handleInviteClick = (roomId: string, gameType: string) => {
+  const handleInviteClick = async (roomId: string, gameType: string) => {
     switch (gameType) {
       case 'chess':
         localStorage.setItem('piece_join_status', 'new');
@@ -1774,6 +1775,20 @@ const ChatRoom: React.FC = () => {
         break;
       case 'chineseChess':
         history.push(`/game/chineseChess?roomId=${roomId}&mode=online`);
+        break;
+      case 'draw':
+        try {
+          const res = await joinRoomUsingPost({ roomId: roomId });
+          if (res.data && res.code === 0) {
+          message.success('加入房间成功');
+          history.push(`/draw/${roomId}`);
+          } else {
+            message.error(res.message || '加入房间失败');
+          }
+        } catch (error) {
+          console.error('加入房间出错:', error);
+          message.error('加入房间失败，请稍后再试');
+        }
         break;
       default:
         break;
@@ -2054,7 +2069,7 @@ const ChatRoom: React.FC = () => {
 
     // 检查是否是邀请消息
     // const inviteMatch = content.match(/\[invite\/(\w+)\](\d+)\[\/invite\]/);
-    const inviteMatch = /\[invite\/([a-zA-Z0-9_]+)\]([0-9]+)\[\/invite\]/i.exec(content);
+    const inviteMatch = /\[invite\/([a-zA-Z0-9_]+)\]([a-zA-Z0-9_]+)\[\/invite\]/i.exec(content);
     if (inviteMatch) {
       const roomId = inviteMatch[2];
       const gameType = inviteMatch[1];
@@ -2066,18 +2081,21 @@ const ChatRoom: React.FC = () => {
         case 'chineseChess':
           game = '中国象棋';
           break;
+        case 'draw':
+          game = '你画我猜';
+          break;
       }
       return (
         <div className={styles.inviteMessage}>
           <div className={styles.inviteContent}>
-            <span className={styles.inviteText}>🎮 {game}对战邀请</span>
+            <span className={styles.inviteText}>🎮 {game}游戏邀请</span>
             <Button
               type="primary"
               size="small"
               onClick={() => handleInviteClick(roomId, gameType)}
               className={styles.inviteButton}
             >
-              加入对战
+              加入房间
             </Button>
           </div>
         </div>
@@ -3067,7 +3085,7 @@ const ChatRoom: React.FC = () => {
         okText={isRedPacketSending ? "发送中..." : "发送"}
         cancelText="取消"
         okButtonProps={{ loading: isRedPacketSending }}
-        width={400}
+        width={480}
         className={styles.redPacketModal}
       >
         <div className={styles.redPacketForm}>

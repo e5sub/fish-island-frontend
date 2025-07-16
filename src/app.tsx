@@ -25,7 +25,7 @@ const getSiteName = () => {
     const {siteName} = JSON.parse(savedSiteConfig);
     return siteName;
   }
-  return '摸鱼岛 - 有趣的在线交流平台';
+  return '摸鱼岛';
 };
 
 // 监听路由变化
@@ -35,7 +35,10 @@ const listenRouteChange = () => {
     const pathname = location.pathname;
     let title = getSiteName();
 
-    document.title = title;
+    setTimeout(() => {
+      document.title = title;
+    }, 200); // 等待浏览器刷新页面
+
 
     // 更新 meta 描述
     let description = '摸鱼岛 - 一个有趣的在线游戏平台，提供多种休闲游戏和社交功能';
