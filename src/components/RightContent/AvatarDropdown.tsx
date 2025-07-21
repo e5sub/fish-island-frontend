@@ -35,6 +35,7 @@ import {
   Upload,
   Badge
 } from 'antd';
+import defaultSettings from '../../../config/defaultSettings';
 import type {MenuInfo} from 'rc-menu/lib/interface';
 import React, {lazy, useCallback, useEffect, useRef, useState} from 'react';
 import {flushSync} from 'react-dom';
@@ -1968,8 +1969,14 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu}) => {
               document.head.appendChild(newLink);
             });
 
-            // 更新网站标题
-            document.title = values.siteName;
+            // 使用setTimeout确保localStorage更新完成后再设置标题
+            setTimeout(() => {
+              document.title = values.siteName;
+            }, 0);
+
+            // 触发自定义事件，通知其他组件网站设置已更新
+            window.dispatchEvent(new CustomEvent('siteConfigChange'));
+
             message.success('网站设置已保存');
             setIsSiteConfigOpen(false);
           }}
@@ -2106,8 +2113,14 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu}) => {
                     document.head.appendChild(newLink);
                   });
 
-                  // 更新网站标题
-                  document.title = defaultSiteConfig.siteName;
+                  // 使用setTimeout确保localStorage更新完成后再设置标题
+                  setTimeout(() => {
+                    document.title = defaultSettings.title;
+                  }, 0);
+
+                  // 触发自定义事件，通知其他组件网站设置已更新
+                  window.dispatchEvent(new CustomEvent('siteConfigChange'));
+
                   message.success('网站设置已重置为默认样式');
                 }}
               >

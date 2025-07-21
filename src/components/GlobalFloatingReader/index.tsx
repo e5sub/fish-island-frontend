@@ -231,7 +231,7 @@ const GlobalReader: React.FC<ReaderProps> = ({ visible, onClose }): React.ReactN
       );
       localStorage.setItem('fish-reader-books', JSON.stringify(updatedBooks));
     } catch (error) {
-      console.error('更新本地存储失败:', error);
+      console.log('更新本地存储失败:', error);
     }
   }, []);
 

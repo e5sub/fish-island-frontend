@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { PageContainer } from '@ant-design/pro-components';
-import { Card, List, Button, Typography, Space, Badge, Input, Modal, Form, message, Empty, Avatar, Tooltip, Tag, Row, Col, Divider, Switch, Popconfirm, Radio, InputNumber } from 'antd';
+import { Card, List, Button, Typography, Space, Badge, Input, Modal, Form, message, Empty, Avatar, Tooltip, Tag, Row, Col, Switch, Popconfirm, Radio, InputNumber } from 'antd';
 import { SearchOutlined, PlusOutlined, UserOutlined, TeamOutlined, ClockCircleOutlined, InfoCircleOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
-import { getAllRoomsUsingGet, createRoomUsingPost, joinRoomUsingPost, getRoomByIdUsingGet, removeRoomUsingPost } from '@/services/backend/drawGameController';
+import { getAllRoomsUsingGet, createRoomUsingPost, joinRoomUsingPost, removeRoomUsingPost } from '@/services/backend/drawGameController';
 import { useModel, history } from '@umijs/max';
 import './index.less';
 import { wsService } from '@/services/websocket';
-import { a } from 'framer-motion/dist/types.d-DUA-weyD';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 // 使用与后端接口一致的类型
 type RoomItem = API.DrawRoomVO;
@@ -99,6 +98,7 @@ const DrawRoomPage: React.FC = () => {
         maxPlayers: values.maxPlayers,
         totalRounds: values.totalRounds || 3,
         creatorOnlyMode: !values.creatorOnlyMode,
+        wordType: values.wordType || '', // 添加词库类型参数
       });
 
       if (res.data && res.code === 0) {
@@ -462,6 +462,7 @@ const DrawRoomPage: React.FC = () => {
             maxPlayers: 8,
             totalRounds: 6,
             creatorOnlyMode: true,
+            wordType: 'default', 
           }}
           className="create-room-form"
         >
@@ -514,6 +515,18 @@ const DrawRoomPage: React.FC = () => {
                 />
               )}
             </div>
+          </Form.Item>
+
+          <Form.Item
+            name="wordType"
+            label={<span className="form-label">词库类型</span>}
+            rules={[{ required: true, message: '请选择词库类型' }]}
+          >
+            <Radio.Group>
+              <Radio.Button value="default">默认词库</Radio.Button>
+              <Radio.Button value="hero">王者荣耀</Radio.Button>
+              <Radio.Button value="idiom">成语</Radio.Button>
+            </Radio.Group>
           </Form.Item>
 
           <Form.Item

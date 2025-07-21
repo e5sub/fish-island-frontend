@@ -105,7 +105,7 @@ const PostDetail: React.FC = () => {
   const [replyPastedImages, setReplyPastedImages] = useState<{[commentId: string]: string[]}>({});
   const [uploadingImage, setUploadingImage] = useState<boolean>(false);
   const [uploadingReplyImage, setUploadingReplyImage] = useState<{[commentId: string]: boolean}>({});
-  
+
   // 处理图片压缩
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
@@ -373,7 +373,7 @@ const PostDetail: React.FC = () => {
                   // 为代码块添加复制按钮
                   Vditor.codeRender(block as HTMLElement);
                 });
-                
+
                 // 处理表格和图片，确保不会导致横向滚动
                 contentRef.current?.querySelectorAll('table').forEach((table) => {
                   table.style.maxWidth = '100%';
@@ -382,7 +382,7 @@ const PostDetail: React.FC = () => {
                   table.style.width = 'fit-content';
                   table.style.margin = '0 auto';
                 });
-                
+
                 contentRef.current?.querySelectorAll('img').forEach((img) => {
                   img.style.maxWidth = '100%';
                   img.style.height = 'auto';
@@ -391,18 +391,18 @@ const PostDetail: React.FC = () => {
                     img.style.maxWidth = '100%';
                   });
                 });
-                
+
                 // 处理可能导致溢出的元素
                 contentRef.current?.querySelectorAll('iframe, video, embed, object').forEach((elem) => {
                   elem.setAttribute('style', 'max-width: 100%; width: 100%;');
                 });
-                
+
                 // 处理长链接文本
                 contentRef.current?.querySelectorAll('a').forEach((link) => {
                   link.style.wordBreak = 'break-word';
                   link.style.overflowWrap = 'break-word';
                 });
-                
+
                 // 处理代码块
                 contentRef.current?.querySelectorAll('pre').forEach((pre) => {
                   pre.style.maxWidth = '100%';
@@ -635,7 +635,7 @@ const PostDetail: React.FC = () => {
   // 切换回复框显示状态
   const toggleReplyBox = (commentId: number | string) => {
     console.log('切换回复框:', commentId);
-    
+
     // 清空该评论的粘贴图片
     setReplyPastedImages(prev => {
       const newImages = {...prev};
@@ -804,7 +804,7 @@ const PostDetail: React.FC = () => {
 
     const parentIdStr = parentId.toString();
     const pastedImagesForComment = replyPastedImages[parentIdStr] || [];
-    
+
     if (!replyContent.trim() && pastedImagesForComment.length === 0) {
       console.error('回复内容为空');
       message.warning('回复内容不能为空');
@@ -870,14 +870,14 @@ const PostDetail: React.FC = () => {
     try {
       // 组合回复内容，包括粘贴的图片
       let finalContent = replyContent.trim();
-      
+
       // 添加图片标签
       if (pastedImagesForComment.length > 0) {
         pastedImagesForComment.forEach(imageUrl => {
           finalContent += `\n[img]${imageUrl}[/img]`;
         });
       }
-      
+
       await addCommentUsingPost({
         postId: id as unknown as number,
         content: finalContent,
@@ -998,7 +998,7 @@ const PostDetail: React.FC = () => {
       message.warning('请先登录');
       return;
     }
-    
+
     Modal.confirm({
       title: '确认删除',
       content: '确定要删除这条评论吗？删除后将无法恢复。',
@@ -1009,30 +1009,30 @@ const PostDetail: React.FC = () => {
           const res = await deleteCommentUsingPost({
             id: commentId
           } as any);
-          
+
           if (res.data) {
             message.success('评论删除成功');
-            
+
             // 从评论列表中移除已删除的评论
             setComments(comments.filter(comment => {
               // 如果是根评论被删除
               if (comment.id === commentId) {
                 return false;
               }
-              
+
               // 检查子评论是否被删除
               if (comment.children && comment.children.length > 0) {
                 comment.children = comment.children.filter(child => child.id !== commentId);
               }
-              
+
               // 检查预览子评论是否被删除
               if (comment.previewChildren && comment.previewChildren.length > 0) {
                 comment.previewChildren = comment.previewChildren.filter(child => child.id !== commentId);
               }
-              
+
               return true;
             }));
-            
+
             // 更新帖子的评论数
             if (post) {
               setPost({
@@ -1082,12 +1082,12 @@ const PostDetail: React.FC = () => {
     try {
       // 组合评论内容，包括上传的图片URL
       let finalContent = commentContent.trim();
-      
+
       // 添加图片标签
       pastedImages.forEach(imageUrl => {
         finalContent += `\n[img]${imageUrl}[/img]`;
       });
-      
+
       await addCommentUsingPost({
         postId: id as unknown as number,
         content: finalContent,
@@ -1096,7 +1096,7 @@ const PostDetail: React.FC = () => {
       message.success('评论成功');
       setCommentContent('');
       setPastedImages([]); // 清空粘贴的图片
-      
+
       // 重新获取评论列表，显示最新评论
       setCommentPagination({
         ...commentPagination,
@@ -1126,22 +1126,22 @@ const PostDetail: React.FC = () => {
     // 处理评论内容中的表情包图片
     const renderCommentContent = (content?: string) => {
       if (!content) return '';
-      
+
       // 图片标签匹配正则表达式
       const imgRegex = new RegExp('\\[img\\](.*?)\\[/img\\]', 'g');
-      
+
       if (content.match(imgRegex)) {
         // 如果包含图片标签，需要特殊处理
         const parts: React.ReactNode[] = [];
         let lastIndex = 0;
         let match;
-        
+
         while ((match = imgRegex.exec(content)) !== null) {
           // 添加图片前的文本
           if (match.index > lastIndex) {
             parts.push(<span key={`text-${match.index}`}>{content.slice(lastIndex, match.index)}</span>);
           }
-          
+
           // 添加图片
           const imageUrl = match[1];
           parts.push(
@@ -1156,25 +1156,25 @@ const PostDetail: React.FC = () => {
               style={{ maxHeight: '100px', margin: '2px 0' }}
             />
           );
-          
+
           lastIndex = match.index + match[0].length;
         }
-        
+
         // 添加剩余的文本
         if (lastIndex < content.length) {
           parts.push(<span key={`text-end`}>{content.slice(lastIndex)}</span>);
         }
-        
+
         return <div className="comment-content-with-emoticon">{parts}</div>;
       }
-      
+
       return content;
     };
 
     const commentIdStr = item.id?.toString() || '';
     const commentPastedImages = replyPastedImages[commentIdStr] || [];
     const isUploading = uploadingReplyImage[commentIdStr];
-    
+
     return (
       <div className={`comment-item ${isChild ? 'child-comment' : ''}`} key={item.id}>
         <div className="comment-item-avatar">
@@ -1247,21 +1247,21 @@ const PostDetail: React.FC = () => {
                 className="reply-textarea"
                 disabled={isUploading}
               />
-              
+
               {isUploading && (
                 <div className="uploading-indicator">
                   <LoadingOutlined spin /> 正在上传图片...
                 </div>
               )}
-              
+
               {/* 粘贴图片预览 */}
               {commentPastedImages.length > 0 && (
                 <div className="pasted-images-preview">
                   {commentPastedImages.map((imageUrl, index) => (
                     <div key={index} className="pasted-image-item">
-                      <Image 
-                        src={imageUrl} 
-                        alt="粘贴图片" 
+                      <Image
+                        src={imageUrl}
+                        alt="粘贴图片"
                         className="pasted-image"
                         preview={{mask: false}}
                       />
@@ -1276,7 +1276,7 @@ const PostDetail: React.FC = () => {
                   ))}
                 </div>
               )}
-              
+
               <div className="reply-actions">
                 <Button
                   size="small"
@@ -1489,15 +1489,15 @@ const PostDetail: React.FC = () => {
   const handleEmoticonSelect = (url: string) => {
     // 直接提交表情图片评论，不在输入框显示图片代码
     setIsEmoticonPickerVisible(false);
-    
+
     // 检查当前用户是否登录
     if (!currentUser) {
       message.warning('请先登录');
       return;
     }
-    
+
     if (!id) return;
-    
+
     // 直接提交评论
     setCommentLoading(true);
     addCommentUsingPost({
@@ -1511,7 +1511,7 @@ const PostDetail: React.FC = () => {
         current: 1 // 重置到第一页以查看新评论
       });
       fetchComments();
-      
+
       // 更新帖子的评论数
       if (post) {
         setPost({
@@ -1554,18 +1554,18 @@ const PostDetail: React.FC = () => {
   const handleReplyEmoticonSelect = (commentId: number | string, url: string) => {
     // 关闭表情选择器
     setIsEmoticonPickerVisible(false);
-    
+
     if (!currentUser) {
       message.warning('请先登录');
       return;
     }
-    
+
     if (!id) return;
-    
+
     // 查找评论信息，获取根评论ID
     const parentId = typeof commentId === 'number' || typeof commentId === 'string' ? commentId : 0;
     let rootId: number | string | null = null;
-    
+
     // 遍历评论列表查找父评论和根评论信息
     for (const comment of comments) {
               // 如果是根评论
@@ -1573,7 +1573,7 @@ const PostDetail: React.FC = () => {
           rootId = comment.id || null;
           break;
         }
-        
+
         // 检查子评论
         if (comment.children && comment.children.length > 0) {
           const child = comment.children.find(c => c.id === commentId);
@@ -1582,7 +1582,7 @@ const PostDetail: React.FC = () => {
             break;
           }
         }
-        
+
         // 检查预览子评论
         if (comment.previewChildren && comment.previewChildren.length > 0) {
           const child = comment.previewChildren.find(c => c.id === commentId);
@@ -1592,10 +1592,10 @@ const PostDetail: React.FC = () => {
           }
         }
     }
-    
+
     // 确保rootId有效，如果没有提供，则使用parentId作为rootId
     const finalRootId = rootId || parentId;
-    
+
     // 更新评论的加载状态
     setComments(comments.map(comment => {
       if (comment.id === parentId) {
@@ -1634,16 +1634,16 @@ const PostDetail: React.FC = () => {
       }
       return comment;
     }));
-    
+
     // 直接提交回复
     addCommentUsingPost({
       postId: id as unknown as number,
       content: `[img]${url}[/img]`,
-      parentId: Number(parentId),
-      rootId: finalRootId !== null ? Number(finalRootId) : undefined
+      parentId: parentId as unknown as number,
+      rootId: finalRootId !== null ? finalRootId as unknown as number : undefined
     } as any).then(() => {
       message.success('回复成功');
-      
+
       // 清空回复框并隐藏
       setComments(comments.map(comment => {
         if (comment.id === parentId) {
@@ -1688,10 +1688,10 @@ const PostDetail: React.FC = () => {
         }
         return comment;
       }));
-      
+
       // 重新获取评论列表，显示最新评论
       fetchComments();
-      
+
       // 更新帖子的评论数
       if (post) {
         setPost({
@@ -1701,7 +1701,7 @@ const PostDetail: React.FC = () => {
       }
     }).catch(() => {
       message.error('回复失败');
-      
+
       // 重置加载状态
       setComments(comments.map(comment => {
         if (comment.id === parentId) {
@@ -1944,21 +1944,21 @@ const PostDetail: React.FC = () => {
                         onPaste={handlePaste}
                         disabled={uploadingImage}
                       />
-                      
+
                       {uploadingImage && (
                         <div className="uploading-indicator">
                           <LoadingOutlined spin /> 正在上传图片...
                         </div>
                       )}
-                      
+
                       {/* 粘贴图片预览 */}
                       {pastedImages.length > 0 && (
                         <div className="pasted-images-preview">
                           {pastedImages.map((imageUrl, index) => (
                             <div key={index} className="pasted-image-item">
-                              <Image 
-                                src={imageUrl} 
-                                alt="粘贴图片" 
+                              <Image
+                                src={imageUrl}
+                                alt="粘贴图片"
                                 className="pasted-image"
                                 preview={{mask: false}}
                               />
@@ -1973,7 +1973,7 @@ const PostDetail: React.FC = () => {
                           ))}
                         </div>
                       )}
-                      
+
                       <div className="comment-toolbar">
                         <Popover
                           content={emojiPickerContent}

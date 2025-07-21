@@ -248,6 +248,18 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponsePageUserVip_ = {
+    code?: number;
+    data?: PageUserVip_;
+    message?: string;
+  };
+
+  type BaseResponsePageUserVipVO_ = {
+    code?: number;
+    data?: PageUserVipVO_;
+    message?: string;
+  };
+
   type BaseResponsePageUserVO_ = {
     code?: number;
     data?: PageUserVO_;
@@ -317,6 +329,12 @@ declare namespace API {
   type BaseResponseUserMuteVO_ = {
     code?: number;
     data?: UserMuteVO;
+    message?: string;
+  };
+
+  type BaseResponseUserVipVO_ = {
+    code?: number;
+    data?: UserVipVO;
     message?: string;
   };
 
@@ -548,8 +566,10 @@ declare namespace API {
   };
 
   type DrawRoomCreateRequest = {
+    creatorOnlyMode?: boolean;
     maxPlayers?: number;
     totalRounds?: number;
+    wordType?: string;
   };
 
   type DrawRoomVO = {
@@ -558,6 +578,7 @@ declare namespace API {
     creatorAvatar?: string;
     creatorId?: number;
     creatorName?: string;
+    creatorOnlyMode?: boolean;
     currentDrawerId?: number;
     currentDrawerName?: string;
     currentPlayers?: number;
@@ -738,6 +759,11 @@ declare namespace API {
   type getUserMuteInfoUsingGETParams = {
     /** userId */
     userId: number;
+  };
+
+  type getUserVipVOByIdUsingGETParams = {
+    /** id */
+    id?: number;
   };
 
   type getUserVoByIdUsingGETParams = {
@@ -1165,6 +1191,32 @@ declare namespace API {
     orders?: OrderItem[];
     pages?: number;
     records?: User[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
+  type PageUserVip_ = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: UserVip[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
+  type PageUserVipVO_ = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: UserVipVO[];
     searchCount?: boolean;
     size?: number;
     total?: number;
@@ -1730,6 +1782,58 @@ declare namespace API {
     userName?: string;
     userProfile?: string;
     userRole?: string;
+  };
+
+  type UserVip = {
+    cardNo?: string;
+    createTime?: string;
+    id?: number;
+    isDelete?: number;
+    type?: number;
+    updateTime?: string;
+    userId?: number;
+    validDays?: string;
+  };
+
+  type UserVipAddRequest = {
+    cardNo?: string;
+    type?: number;
+    userId?: number;
+    validDays?: string;
+  };
+
+  type UserVipQueryRequest = {
+    cardNo?: string;
+    createTimeEnd?: string;
+    createTimeStart?: string;
+    current?: number;
+    id?: number;
+    pageSize?: number;
+    sortField?: string;
+    sortOrder?: string;
+    type?: number;
+    updateTimeEnd?: string;
+    updateTimeStart?: string;
+    userId?: number;
+  };
+
+  type UserVipUpdateRequest = {
+    cardNo?: string;
+    id?: number;
+    type?: number;
+    userId?: number;
+    validDays?: string;
+  };
+
+  type UserVipVO = {
+    cardNo?: string;
+    createTime?: string;
+    id?: number;
+    isExpired?: boolean;
+    type?: number;
+    user?: UserVO;
+    userId?: number;
+    validDays?: string;
   };
 
   type UserVO = {

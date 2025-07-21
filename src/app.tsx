@@ -22,22 +22,18 @@ const loginPath = '/user/login';
 const getSiteName = () => {
   const savedSiteConfig = localStorage.getItem('siteConfig');
   if (savedSiteConfig) {
-    const {siteName} = JSON.parse(savedSiteConfig);
-    return siteName;
+    const { siteName } = JSON.parse(savedSiteConfig);
+    return siteName || defaultSettings.title;
   }
-  return '摸鱼岛';
+  return defaultSettings.title;
 };
 
 // 监听路由变化
 const listenRouteChange = () => {
-  history.listen(({location}) => {
-    // 设置网站标题
+  history.listen(({ location }) => {
+    // 设置网站标题 - 优先使用用户设置的网站名称，否则使用defaultSettings中的标题
     const pathname = location.pathname;
     let title = getSiteName();
-
-    setTimeout(() => {
-      document.title = title;
-    }, 200); // 等待浏览器刷新页面
 
 
     // 更新 meta 描述
@@ -167,15 +163,16 @@ export async function getInitialState(): Promise<InitialState> {
       document.head.appendChild(newLink);
     });
 
-    // 更新网站标题
-    document.title = siteName;
-    // 更新默认设置中的标题
-    defaultSettings.title = siteName;
+    // 使用getSiteName获取标题，优先使用用户设置的网站名称
+    document.title = getSiteName();
 
     // 更新通知设置
     if (notificationEnabled !== undefined) {
       setNotificationEnabled(notificationEnabled);
     }
+  } else {
+    // 如果没有自定义设置，使用defaultSettings中的标题
+    document.title = defaultSettings.title;
   }
 
   // 检查当前路由是否需要登录验证
@@ -222,6 +219,47 @@ export const layout: RunTimeLayoutConfig = ({initialState}) => {
   useEffect(() => {
     listenRouteChange();
     registerServiceWorker();
+
+    // 使用标志位防止死循环的MutationObserver
+    let isSettingTitle = false;
+
+    const observer = new MutationObserver((mutations) => {
+      // 如果正在设置标题，跳过
+      if (isSettingTitle) return;
+
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          // 动态获取当前期望的标题
+          const expectedTitle = getSiteName();
+          // 检查当前标题是否与期望的标题不同
+          if (document.title !== expectedTitle) {
+            isSettingTitle = true;
+            document.title = expectedTitle;
+            // 使用setTimeout确保DOM更新完成后再重置标志位
+            setTimeout(() => {
+              isSettingTitle = false;
+            }, 0);
+          }
+        }
+      });
+    });
+
+    // 监听document.head的变化
+    observer.observe(document.head, {
+      childList: true,
+      subtree: true,
+    });
+
+    // 设置初始标题
+    isSettingTitle = true;
+    document.title = getSiteName();
+    setTimeout(() => {
+      isSettingTitle = false;
+    }, 0);
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   if (isBossMode) {
