@@ -1254,6 +1254,7 @@ declare namespace API {
     id?: number;
     isDelete?: number;
     isFeatured?: number;
+    summary?: string;
     tags?: string;
     thumbNum?: number;
     title?: string;
@@ -1330,6 +1331,7 @@ declare namespace API {
     hasThumb?: boolean;
     id?: number;
     isFeatured?: number;
+    summary?: string;
     tagList?: string[];
     thumbComment?: CommentVO;
     thumbNum?: number;

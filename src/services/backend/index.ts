@@ -25,6 +25,7 @@ import * as undercoverGameController from './undercoverGameController';
 import * as userController from './userController';
 import * as userMuteController from './userMuteController';
 import * as userTitleController from './userTitleController';
+import * as userVipController from './userVipController';
 import * as webParserController from './webParserController';
 export default {
   avatarFrameController,
@@ -51,4 +52,5 @@ export default {
   userController,
   userMuteController,
   userTitleController,
+  userVipController,
 };

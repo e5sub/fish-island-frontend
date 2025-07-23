@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Avatar, Button, message, Spin, Skeleton } from 'antd';
+import { Avatar, Button, message, Spin, Tabs } from 'antd';
+import { ShopOutlined, CrownOutlined, GiftOutlined } from '@ant-design/icons';
 import { getLoginUserUsingGet } from '@/services/backend/userController';
 import { listAvatarFrameVoByPageUsingPost, exchangeFrameUsingPost, setCurrentFrameUsingPost } from '@/services/backend/avatarFrameController';
 import styles from './index.module.less';
@@ -7,12 +8,12 @@ import { useModel } from '@umijs/max';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 const AvatarFrames: React.FC = () => {
-  const { initialState, setInitialState } = useModel('@@initialState');
+  const { setInitialState } = useModel('@@initialState');
+  const [activeTab, setActiveTab] = useState<string>('frames');
   const [frames, setFrames] = useState<API.AvatarFrameVO[]>([]);
   const [currentUser, setCurrentUser] = useState<API.LoginUserVO | null>(null);
   const [previewFrame, setPreviewFrame] = useState<API.AvatarFrameVO | null>(null);
   const [current, setCurrent] = useState<number>(1);
-  const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
@@ -50,10 +51,9 @@ const AvatarFrames: React.FC = () => {
           };
           setFrames([emptyFrame, ...(res.data.records ?? [])]);
         } else {
-          setFrames(prev => [...prev, ...(res.data.records ?? [])]);
+          setFrames(prev => [...prev, ...(res.data?.records ?? [])]);
         }
-        setTotal((Number(res.data.total) ?? 0) + (page === 1 ? 1 : 0));
-        setHasMore((res.data.records?.length ?? 0) > 0);
+        setHasMore((res.data?.records?.length ?? 0) > 0);
       }
     } catch (error) {
       message.error('获取头像框列表失败');
@@ -130,12 +130,180 @@ const AvatarFrames: React.FC = () => {
     }
   };
 
+  // 头像框标签页内容
+  const renderAvatarFrames = () => (
+    <InfiniteScroll
+      dataLength={frames.length}
+      next={loadMoreData}
+      hasMore={hasMore}
+      loader={
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <Spin />
+        </div>
+      }
+      endMessage={
+        <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+          没有更多头像框了
+        </div>
+      }
+    >
+      <div className={styles.frameList}>
+        {frames.map((frame) => (
+          <div
+            key={frame.id}
+            className={styles.frameItem}
+            onMouseEnter={() => setPreviewFrame(frame)}
+            onMouseLeave={() => setPreviewFrame(null)}
+          >
+            <div className={styles.framePreview}>
+              <div className={styles.frameDisplay}>
+                <div className={styles.placeholderCircle} />
+                {frame.id !== -1 && (
+                  <img
+                    src={frame.url}
+                    className={styles.avatarFrame}
+                    alt={frame.name}
+                  />
+                )}
+              </div>
+            </div>
+            <div className={styles.frameInfo}>
+              <div className={styles.priceTag}>
+                {frame.points} 积分
+              </div>
+              {frame.hasOwned ? (
+                <Button
+                  type="primary"
+                  onClick={() => handleSetFrame(frame)}
+                  className={styles.purchaseButton}
+                >
+                  使用
+                </Button>
+              ) : (
+                <Button
+                  type="default"
+                  danger
+                  onClick={() => handlePurchase(frame)}
+                  className={styles.purchaseButton}
+                >
+                  立即兑换
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </InfiniteScroll>
+  );
+
+  // 其他物品标签页内容
+  const renderOtherItems = () => (
+    <div className={styles.frameList}>
+      {/* 占位商品项，保持与头像框相同的布局 */}
+      <div className={styles.frameItem}>
+        <div className={styles.framePreview}>
+          <div className={styles.comingSoonItem}>
+            <GiftOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
+            <p style={{ margin: '12px 0 0', color: '#999', fontSize: 14 }}>
+              即将上线
+            </p>
+          </div>
+        </div>
+        <div className={styles.frameInfo}>
+          <div className={styles.priceTag}>
+            ??? 积分
+          </div>
+          <Button
+            type="default"
+            disabled
+            className={styles.purchaseButton}
+          >
+            敬请期待
+          </Button>
+        </div>
+      </div>
+
+      {/* 可以添加更多占位项 */}
+      <div className={styles.frameItem}>
+        <div className={styles.framePreview}>
+          <div className={styles.comingSoonItem}>
+            <GiftOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
+            <p style={{ margin: '12px 0 0', color: '#999', fontSize: 14 }}>
+              即将上线
+            </p>
+          </div>
+        </div>
+        <div className={styles.frameInfo}>
+          <div className={styles.priceTag}>
+            ??? 积分
+          </div>
+          <Button
+            type="default"
+            disabled
+            className={styles.purchaseButton}
+          >
+            敬请期待
+          </Button>
+        </div>
+      </div>
+
+      <div className={styles.frameItem}>
+        <div className={styles.framePreview}>
+          <div className={styles.comingSoonItem}>
+            <GiftOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
+            <p style={{ margin: '12px 0 0', color: '#999', fontSize: 14 }}>
+              即将上线
+            </p>
+          </div>
+        </div>
+        <div className={styles.frameInfo}>
+          <div className={styles.priceTag}>
+            ??? 积分
+          </div>
+          <Button
+            type="default"
+            disabled
+            className={styles.purchaseButton}
+          >
+            敬请期待
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const tabItems = [
+    {
+      key: 'frames',
+      label: (
+        <span>
+          <CrownOutlined />
+          头像框
+        </span>
+      ),
+      children: renderAvatarFrames(),
+    },
+    {
+      key: 'others',
+      label: (
+        <span>
+          <GiftOutlined />
+          其他物品
+        </span>
+      ),
+      children: renderOtherItems(),
+    },
+  ];
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.title}>
-          <h1>头像框商城</h1>
-          <p className={styles.subtitle}>用积分兑换专属头像框，展示你的个性</p>
+          <h1>
+            <ShopOutlined style={{ marginRight: 8 }} />
+            摸鱼商店
+          </h1>
+          <p className={styles.subtitle}>用摸鱼积分兑换你想要的物品吧</p>
         </div>
         <div className={styles.userPreview}>
           <div className={styles.avatarWithFrame}>
@@ -157,68 +325,15 @@ const AvatarFrames: React.FC = () => {
         </div>
       </div>
 
-      <InfiniteScroll
-        dataLength={frames.length}
-        next={loadMoreData}
-        hasMore={hasMore}
-        loader={
-          <div style={{ textAlign: 'center', padding: '20px' }}>
-            <Spin />
-          </div>
-        }
-        endMessage={
-          <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
-            没有更多头像框了
-          </div>
-        }
-      >
-        <div className={styles.frameList}>
-          {frames.map((frame) => (
-            <div
-              key={frame.id}
-              className={styles.frameItem}
-              onMouseEnter={() => setPreviewFrame(frame)}
-              onMouseLeave={() => setPreviewFrame(null)}
-            >
-              <div className={styles.framePreview}>
-                <div className={styles.frameDisplay}>
-                  <div className={styles.placeholderCircle} />
-                  {frame.id !== -1 && (
-                    <img
-                      src={frame.url}
-                      className={styles.avatarFrame}
-                      alt={frame.name}
-                    />
-                  )}
-                </div>
-              </div>
-              <div className={styles.frameInfo}>
-                <div className={styles.priceTag}>
-                  {frame.points} 积分
-                </div>
-                {frame.hasOwned ? (
-                  <Button
-                    type="primary"
-                    onClick={() => handleSetFrame(frame)}
-                    className={styles.purchaseButton}
-                  >
-                    使用
-                  </Button>
-                ) : (
-                  <Button
-                    type="default"
-                    danger
-                    onClick={() => handlePurchase(frame)}
-                    className={styles.purchaseButton}
-                  >
-                    立即兑换
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </InfiniteScroll>
+      <div className={styles.tabsContainer}>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={tabItems}
+          size="large"
+          className={styles.shopTabs}
+        />
+      </div>
     </div>
   );
 };

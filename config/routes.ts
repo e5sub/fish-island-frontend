@@ -124,10 +124,10 @@ export default [
     ],
   },
   {
-    icon: 'PictureOutlined',
+    icon: 'AccountBookOutlined',
     path: '/avatarFrames',
     component: './Utils/AvatarFrames',
-    name: '头像框兑换',
+    name: '摸鱼商店',
     requireAuth: true
   },
   {

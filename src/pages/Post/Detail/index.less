@@ -5,6 +5,33 @@
   overflow-x: hidden; /* 添加这一行防止溢出 */
   width: 100%; /* 确保容器占满可用宽度 */
   box-sizing: border-box; /* 确保padding不会导致宽度溢出 */
+  
+  .post-detail-summary {
+    margin-bottom: 20px;
+    
+    .summary-header {
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      color: #FFA768;
+      
+      .anticon {
+        margin-right: 8px;
+        color: #FFA768;
+      }
+    }
+    
+    .ant-alert-description {
+      color: #333;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+    
+    .ant-alert-message {
+      color: #FFA768;
+    }
+  }
 }
 
 .post-detail-header {

@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {useParams, history, Link} from 'umi';
-import {Card, Avatar, Typography, Space, Divider, List, Button, message, Spin, Input, Pagination, Modal, Popover, Image} from 'antd';
+import {Card, Avatar, Typography, Space, Divider, List, Button, message, Spin, Input, Pagination, Modal, Popover, Image, Alert} from 'antd';
 import {
   LikeOutlined,
   LikeFilled,
@@ -19,7 +19,8 @@ import {
   SmileOutlined,
   PictureOutlined,
   CloseCircleOutlined,
-  LoadingOutlined
+  LoadingOutlined,
+  RobotOutlined
 } from '@ant-design/icons';
 import {getPostVoByIdUsingGet, deletePostUsingPost1} from '@/services/backend/postController';
 import {doThumbUsingPost1} from '@/services/backend/postThumbController';
@@ -1862,6 +1863,28 @@ const PostDetail: React.FC = () => {
               </div>
             </div>
             <Divider/>
+            
+            {/* AI 生成的摘要 */}
+            {post.summary && post.summary.trim() !== '' && (
+              <div className="post-detail-summary">
+                <Alert
+                  message={
+                    <div className="summary-header">
+                      <RobotOutlined /> AI 生成摘要
+                    </div>
+                  }
+                  description={post.summary}
+                  type="info"
+                  showIcon={false}
+                  style={{ 
+                    marginBottom: 16,
+                    background: '#FFF5EB',
+                    borderColor: '#FFA768'
+                  }}
+                />
+              </div>
+            )}
+            
             <div className="post-detail-body">
               {/* Vditor 预览区域 */}
               <div ref={contentRef} className="vditor-reset"></div>
