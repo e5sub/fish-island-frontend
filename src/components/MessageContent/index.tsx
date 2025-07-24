@@ -15,7 +15,8 @@ import {
   UpOutlined,
   DownOutlined,
   TeamOutlined,
-  UserAddOutlined
+  UserAddOutlined,
+  CopyOutlined
 } from '@ant-design/icons';
 import { useModel } from '@umijs/max';
 import { Button, Card, Image, message } from 'antd';
@@ -71,6 +72,8 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
   const undercoverRegex = new RegExp('<undercover>(.*?)</undercover>', 'g');
   // 添加折叠状态管理
   const [collapsedImages, setCollapsedImages] = useState<Set<string>>(new Set());
+  // 添加状态来判断是否为特殊消息类型
+  const [isSpecialMessage, setIsSpecialMessage] = useState(false);
 
   // 获取收藏的表情包
   const fetchFavoriteEmoticons = async () => {
@@ -125,7 +128,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
   // 取消收藏
   const removeFavorite = async (id: number) => {
     try {
-      const response = await deleteEmoticonFavourUsingPost({ id });
+      const response = await deleteEmoticonFavourUsingPost({ id: String(id) });
       if (response.code === 0) {
         message.success('取消收藏成功');
         // 刷新收藏列表
@@ -169,6 +172,23 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
       eventBus.off(EMOTICON_FAVORITE_CHANGED, handleFavoriteChanged);
     };
   }, [currentUser?.id]); // 添加 currentUser.id 作为依赖
+
+  // 添加 useEffect 来检测特殊消息类型
+  useEffect(() => {
+    // 检查是否为特殊消息类型（只包含图片、文件或邀请）
+    const trimmedContent = content.trim();
+    const isOnlyImg = trimmedContent.startsWith('[img]') && trimmedContent.endsWith('[/img]') && 
+                      trimmedContent.match(/\[img\]/g)?.length === 1;
+    const isOnlyFile = trimmedContent.startsWith('[file]') && trimmedContent.endsWith('[/file]') && 
+                       trimmedContent.match(/\[file\]/g)?.length === 1;
+    const isOnlyUndercover = trimmedContent.startsWith('<undercover>') && 
+                             trimmedContent.endsWith('</undercover>') && 
+                             trimmedContent.match(/<undercover>/g)?.length === 1;
+    const hasIframe = checkIframeSyntax(content);
+    
+    // 如果是纯图片、纯文件、纯邀请消息或包含iframe，设置为特殊消息类型
+    setIsSpecialMessage(isOnlyImg || isOnlyFile || isOnlyUndercover || hasIframe);
+  }, [content]);
 
   // 截断文本到指定长度
   const truncateText = (text: string, maxLength: number = 20) => {
@@ -583,6 +603,18 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
     );
   };
 
+  // 添加复制消息到剪贴板的函数
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        message.success('复制成功');
+      })
+      .catch((err) => {
+        console.error('复制失败:', err);
+        message.error('复制失败');
+      });
+  };
+
   // 添加安全的 HTML 渲染函数
   const sanitizeHtml = (html: string) => {
     return DOMPurify.sanitize(html, {
@@ -914,7 +946,23 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
     return parts;
   };
 
-  return <div className={styles.messageContent}>{parseContent()}</div>;
+  return <div className={styles.messageContent}>
+    {!isSpecialMessage && (
+      <div className={styles.copyButton}>
+        <Button
+          type="text"
+          size="small"
+          icon={<CopyOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            copyToClipboard(content);
+          }}
+          title="复制消息"
+        />
+      </div>
+    )}
+    {parseContent()}
+  </div>;
 };
 
 export default MessageContent;
