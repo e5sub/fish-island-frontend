@@ -339,7 +339,6 @@ const PostDetail: React.FC = () => {
         setCurrentUser(res.data);
       }
     } catch (error) {
-      console.error('获取用户信息失败', error);
     }
   };
 
@@ -448,6 +447,8 @@ const PostDetail: React.FC = () => {
           replyLoading: false,
           childrenExpanded: true, // 默认展开子评论
           hasLoadedAllChildren: false, // 默认未加载全部子评论
+          // 确保 childCount 存在，如果API没有返回，则使用 previewChildren 的长度作为默认值
+          childCount: comment.childCount !== undefined ? comment.childCount : (comment.previewChildren?.length || 0),
           // 处理previewChildren
           previewChildren: comment.previewChildren ? comment.previewChildren.map((child: any) => ({
             ...child,
@@ -470,7 +471,6 @@ const PostDetail: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('获取评论失败', error);
       message.error('获取评论失败');
     } finally {
       setCommentsLoading(false);
@@ -513,7 +513,6 @@ const PostDetail: React.FC = () => {
         }));
       }
     } catch (error) {
-      console.error('获取子评论失败', error);
       message.error('获取子评论失败');
     }
   };
@@ -635,7 +634,6 @@ const PostDetail: React.FC = () => {
 
   // 切换回复框显示状态
   const toggleReplyBox = (commentId: number | string) => {
-    console.log('切换回复框:', commentId);
 
     // 清空该评论的粘贴图片
     setReplyPastedImages(prev => {
@@ -647,7 +645,6 @@ const PostDetail: React.FC = () => {
     setComments(comments.map(comment => {
       if (comment.id === commentId) {
         const newShowReplyBox = !comment.showReplyBox;
-        console.log('根评论切换回复框状态:', newShowReplyBox);
 
         return {
           ...comment,
@@ -664,7 +661,6 @@ const PostDetail: React.FC = () => {
           if (child.id === commentId) {
             found = true;
             const newShowReplyBox = !child.showReplyBox;
-            console.log('子评论切换回复框状态:', newShowReplyBox);
 
             return {
               ...child,
@@ -691,7 +687,6 @@ const PostDetail: React.FC = () => {
           if (child.id === commentId) {
             found = true;
             const newShowReplyBox = !child.showReplyBox;
-            console.log('预览子评论切换回复框状态:', newShowReplyBox);
 
             return {
               ...child,
@@ -717,7 +712,6 @@ const PostDetail: React.FC = () => {
 
   // 更新回复内容
   const updateReplyContent = (commentId: number | string, content: string) => {
-    console.log('更新回复内容:', commentId, content);
     setComments(comments.map(comment => {
       if (comment.id === commentId) {
         return {
@@ -765,7 +759,6 @@ const PostDetail: React.FC = () => {
 
   // 提交回复
   const handleSubmitReply = async (parentId: number | string, rootId: number | string | null = null) => {
-    console.log('提交回复 - 参数:', parentId, rootId);
 
     // 找到对应的评论
     let replyContent = '';
@@ -801,19 +794,16 @@ const PostDetail: React.FC = () => {
       }
     }
 
-    console.log('回复内容:', replyContent, '评论ID:', parentId, '找到评论:', foundComment);
 
     const parentIdStr = parentId.toString();
     const pastedImagesForComment = replyPastedImages[parentIdStr] || [];
 
     if (!replyContent.trim() && pastedImagesForComment.length === 0) {
-      console.error('回复内容为空');
       message.warning('回复内容不能为空');
       return;
     }
 
     if (!foundComment) {
-      console.error('未找到对应的评论');
       message.warning('回复失败：未找到对应的评论');
       return;
     }
@@ -827,7 +817,6 @@ const PostDetail: React.FC = () => {
 
     // 确保rootId有效，如果没有提供，则使用parentId作为rootId
     const finalRootId = rootId || parentId;
-    console.log('最终rootId:', finalRootId);
 
     // 更新评论的加载状态
     setComments(comments.map(comment => {
@@ -1045,7 +1034,6 @@ const PostDetail: React.FC = () => {
             message.error('评论删除失败');
           }
         } catch (error) {
-          console.error('删除评论失败:', error);
           message.error('删除评论失败');
         }
       }
@@ -1054,7 +1042,6 @@ const PostDetail: React.FC = () => {
 
   // 切换子评论的展开/收起状态
   const toggleChildrenExpanded = (commentId: number | string) => {
-    console.log('切换子评论展开状态:', commentId);
 
     setComments(comments.map(comment => {
       if (comment.id === commentId) {
@@ -1121,6 +1108,7 @@ const PostDetail: React.FC = () => {
 
   // 渲染评论项
   const renderCommentItem = (item: ExtendedCommentNodeVO, isChild = false, rootId: number | string | null = null) => {
+
     // 确定当前评论的根评论ID
     const currentRootId = isChild ? rootId : item.id;
 
@@ -1234,12 +1222,9 @@ const PostDetail: React.FC = () => {
                 autoSize={{minRows: 2, maxRows: 4}}
                 value={item.replyContent || ''}
                 onChange={(e) => {
-                  console.log('TextArea onChange:', item.id, e.target.value);
                   updateReplyContent(item.id || 0, e.target.value);
                 }}
                 onFocus={() => {
-                  // 确保焦点时内容存在
-                  console.log('TextArea onFocus:', item.id, item.replyContent);
                   if (item.replyContent === undefined) {
                     updateReplyContent(item.id || 0, '');
                   }
@@ -1358,7 +1343,7 @@ const PostDetail: React.FC = () => {
               {item.previewChildren.map(child => renderCommentItem(child, true, item.id))}
 
               {/* 显示加载更多按钮 */}
-              {item.childCount && item.childCount > (item.previewChildren?.length || 0) && (
+              {item.childCount !== undefined && item.childCount > (item.previewChildren?.length || 0) && (
                 <div className="load-more-comments">
                   <Button
                     type="link"
@@ -1433,7 +1418,6 @@ const PostDetail: React.FC = () => {
         message.error('帖子删除失败');
       }
     } catch (error) {
-      console.error('删除帖子失败:', error);
       message.error('删除帖子失败');
     } finally {
       setDeleteLoading(false);
@@ -1863,7 +1847,7 @@ const PostDetail: React.FC = () => {
               </div>
             </div>
             <Divider/>
-            
+
             {/* AI 生成的摘要 */}
             {post.summary && post.summary.trim() !== '' && (
               <div className="post-detail-summary">
@@ -1876,7 +1860,7 @@ const PostDetail: React.FC = () => {
                   description={post.summary}
                   type="info"
                   showIcon={false}
-                  style={{ 
+                  style={{
                     marginBottom: 16,
                     background: '#FFF5EB',
                     borderColor: '#FFA768'
@@ -1884,7 +1868,7 @@ const PostDetail: React.FC = () => {
                 />
               </div>
             )}
-            
+
             <div className="post-detail-body">
               {/* Vditor 预览区域 */}
               <div ref={contentRef} className="vditor-reset"></div>

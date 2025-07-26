@@ -176,7 +176,17 @@ export default function DonationLeaderboard() {
             style={{ width: '100%', maxWidth: 300 }}
           />
           <p style={{ marginTop: 16, color: '#666' }}> 可以备注下用户名，方便 🐷播加入感谢名单哦~</p>
-          <p style={{color: '#666' }}>有疑问或需要帮助请联系站长微信：Lhc_iuuaiong</p>
+          
+          <div style={{ marginTop: 16, backgroundColor: '#f9f0ff', padding: 12, borderRadius: 8, textAlign: 'left' }}>
+            <p style={{ fontWeight: 'bold', color: '#722ed1', marginBottom: 8 }}>打赏福利通知：</p>
+            <ul style={{ paddingLeft: 20, margin: 0 }}>
+              <li>任意金额（0.01 可能会漏补） - 获得"天使投资人"头衔</li>
+              <li>29.9 - 可找岛主领取永久会员</li>
+              <li>100 - 顶级大哥可找岛主开发代码定制头衔称号</li>
+            </ul>
+          </div>
+          
+          <p style={{color: '#666', marginTop: 16 }}>有疑问或需要帮助请联系站长微信：Lhc_iuuaiong</p>
         </div>
       </Modal>
 

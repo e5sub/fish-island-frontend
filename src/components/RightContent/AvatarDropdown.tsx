@@ -1033,6 +1033,72 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu}) => {
   const messageNotificationRef = useRef<MessageNotificationRef>(null);
   const [unreadMessageCount, setUnreadMessageCount] = useState<number>(0);
 
+  // 破蛋日样式
+  const eggBirthdayContainerStyle = useEmotionCss(() => ({
+    fontSize: '14px',
+    color: '#333',
+    padding: '12px 16px',
+    background: 'linear-gradient(135deg, #fff9f0 0%, #fff4e6 100%)',
+    border: '1px solid #ffd8a8',
+    borderRadius: '12px',
+    boxShadow: '0 2px 8px rgba(255, 167, 104, 0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    position: 'relative',
+    overflow: 'hidden'
+  }));
+
+  const eggIconStyle = useEmotionCss(() => ({
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #ffa768 0%, #ff9248 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 6px rgba(255, 167, 104, 0.3)',
+    animation: 'eggPulse 2s infinite ease-in-out',
+    '@keyframes eggPulse': {
+      '0%': {
+        transform: 'scale(1)',
+        boxShadow: '0 2px 6px rgba(255, 167, 104, 0.3)'
+      },
+      '50%': {
+        transform: 'scale(1.05)',
+        boxShadow: '0 4px 12px rgba(255, 167, 104, 0.4)'
+      },
+      '100%': {
+        transform: 'scale(1)',
+        boxShadow: '0 2px 6px rgba(255, 167, 104, 0.3)'
+      }
+    }
+  }));
+
+  const eggDateStyle = useEmotionCss(() => ({
+    fontWeight: 'bold',
+    fontSize: '16px',
+    color: '#ff7d38',
+    marginBottom: '4px',
+    textShadow: '0 1px 1px rgba(255, 167, 104, 0.2)'
+  }));
+
+  const eggDaysContainerStyle = useEmotionCss(() => ({
+    color: '#ff9248',
+    fontSize: '13px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px'
+  }));
+
+  const eggDaysCountStyle = useEmotionCss(() => ({
+    fontWeight: 'bold',
+    background: 'linear-gradient(135deg, #ff9248 0%, #ff7d38 100%)',
+    padding: '2px 8px',
+    borderRadius: '10px',
+    color: 'white'
+  }));
+
   // 显示消息通知抽屉
   const showMessageDrawer = (e: React.MouseEvent) => {
     // 阻止事件冒泡，防止触发下拉菜单
@@ -1684,10 +1750,33 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu}) => {
             </div>
           </Form.Item>
 
+          {currentUser?.createTime && (
+            <Form.Item label="破蛋日">
+              <div className={eggBirthdayContainerStyle}>
+                <div className={eggIconStyle}>
+                  <span style={{ fontSize: '24px' }}>🐣</span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div className={eggDateStyle}>
+                    {moment(currentUser.createTime).format('YYYY年MM月DD日')}
+                  </div>
+                  <div className={eggDaysContainerStyle}>
+                    <span>已经在摸鱼岛生活了 </span>
+                    <span className={eggDaysCountStyle}>
+                      {moment().diff(moment(currentUser.createTime), 'days')} 天
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Form.Item>
+          )}
+
           <Form.Item>
-            <Button type="primary" htmlType="submit">
-              保存修改
-            </Button>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <Button type="primary" htmlType="submit" size="large" style={{ paddingLeft: 40, paddingRight: 40 }}>
+                保存修改
+              </Button>
+            </div>
           </Form.Item>
         </Form>
       </Modal>
@@ -2115,7 +2204,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu}) => {
 
                   // 使用setTimeout确保localStorage更新完成后再设置标题
                   setTimeout(() => {
-                    document.title = defaultSettings.title;
+                    document.title = defaultSettings.title || '摸鱼岛';
                   }, 0);
 
                   // 触发自定义事件，通知其他组件网站设置已更新

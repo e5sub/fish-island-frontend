@@ -79,6 +79,8 @@ interface User {
   avatar: string;
   level: number;
   isAdmin: boolean;
+  vip?: boolean;
+  isVip?: boolean;  // 兼容后端可能使用的字段
   status?: string;
   points?: number;
   region?: string;
@@ -632,6 +634,7 @@ const ChatRoom: React.FC = () => {
                 level: record.messageWrapper?.message?.sender?.level || 1,
                 points: record.messageWrapper?.message?.sender?.points || 0,
                 isAdmin: record.messageWrapper?.message?.sender?.isAdmin || false,
+                isVip: record.messageWrapper?.message?.sender?.isVip || record.messageWrapper?.message?.sender?.vip || false,
                 region: record.messageWrapper?.message?.sender?.region || '未知地区',
                 country: record.messageWrapper?.message?.sender?.country,
                 avatarFramerUrl: record.messageWrapper?.message?.sender?.avatarFramerUrl,
@@ -999,8 +1002,16 @@ const ChatRoom: React.FC = () => {
       const isNewMessage = messageTimestamp > lastMessageTimestamp;
 
       setMessages((prev) => {
-        // 添加新消息
-        const newMessages = [...prev, { ...otherUserMessage }];
+        // 添加新消息，确保 vip 和 isVip 字段都存在
+        const processedMessage = {
+          ...otherUserMessage,
+          sender: {
+            ...otherUserMessage.sender,
+            vip: otherUserMessage.sender.vip || otherUserMessage.sender.isVip || false,
+            isVip: otherUserMessage.sender.isVip || otherUserMessage.sender.vip || false
+          }
+        };
+        const newMessages = [...prev, processedMessage];
 
         // 检查是否在底部
         const container = messageContainerRef.current;
@@ -1204,6 +1215,7 @@ const ChatRoom: React.FC = () => {
         level: currentUser.level || 1,
         points: currentUser.points || 0,
         isAdmin: currentUser.userRole === 'admin',
+        isVip: currentUser.vip,
         region: userIpInfo?.region || '未知地区',
         country: userIpInfo?.country || '未知国家',
         avatarFramerUrl: currentUser.avatarFramerUrl,
@@ -1460,7 +1472,10 @@ const ChatRoom: React.FC = () => {
               </span>
             </div>
             <div className={styles.titlesContainer}>
-              {defaultTitle}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0px' }}>
+                {defaultTitle}
+                {(user.vip || user.isVip) && <span className={styles.vipBadge}>V</span>}
+              </span>
               {otherTitles.length > 0 && (
                 <Popover
                   content={
@@ -1600,17 +1615,25 @@ const ChatRoom: React.FC = () => {
             tagEmoji = '⚔️';
             tagClass = styles.titleTagExecutioner;
             break;
+          case '7': // 电玩少女
+            tagEmoji = '🌸';
+            tagClass = styles.titleTagGamer;
+            break;
+          case '8': // 摸鱼点子王
+            tagEmoji = '💡';
+            tagClass = styles.titleTagIdeaKing;
+            break;
           default:
             tagEmoji = '🎯';
             tagClass = styles.levelTagBeginner;
         }
 
         return (
-          <span className={`${styles.adminTag} ${tagClass}`}>
-            {tagEmoji}
-            <span className={styles.adminText}>{title.name}</span>
-          </span>
-        );
+                <span className={`${styles.adminTag} ${tagClass}`}>
+        {tagEmoji}
+        <span className={styles.adminText}>{title.name}</span>
+      </span>
+    );
       }
     }
 
@@ -1737,6 +1760,7 @@ const ChatRoom: React.FC = () => {
         level: currentUser.level || 1,
         points: currentUser.points || 0, // 确保这里设置了积分
         isAdmin: currentUser.userRole === 'admin',
+        isVip: currentUser.vip,
         region: userIpInfo?.region || '未知地区',
         country: userIpInfo?.country || '未知国家',
         avatarFramerUrl: currentUser.avatarFramerUrl,
@@ -1849,6 +1873,8 @@ const ChatRoom: React.FC = () => {
                 level: currentUser.level || 1,
                 points: currentUser.points || 0,
                 isAdmin: currentUser.userRole === 'admin',
+                vip: currentUser.vip,
+                isVip: currentUser.vip,
                 region: userIpInfo?.region || '未知地区',
                 country: userIpInfo?.country || '未知国家',
                 avatarFramerUrl: currentUser.avatarFramerUrl,
@@ -2734,7 +2760,9 @@ const ChatRoom: React.FC = () => {
                   style={currentUser?.userRole === 'admin' ? { cursor: 'pointer' } : {}}
                 >
                   {msg.sender.name}
-                  {getAdminTag(msg.sender.isAdmin, msg.sender.level, msg.sender.titleId)}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0px' }}>
+                    {getAdminTag(msg.sender.isAdmin, msg.sender.level, msg.sender.titleId)}
+                  </span>
                   <span className={styles.levelBadge}>
                     {getLevelEmoji(msg.sender.level)} {msg.sender.level}
                   </span>
@@ -2941,7 +2969,7 @@ const ChatRoom: React.FC = () => {
                   <CustomerServiceOutlined className={styles.moreOptionsIcon} />
                   <span>点歌</span>
                 </div>
-                {(currentUser?.userRole === 'admin' || (currentUser?.level && currentUser.level >= 6)) && (
+                {(currentUser?.userRole === 'admin' || (currentUser?.level && currentUser.level >= 6) || currentUser?.vip) && (
                   <div className={styles.moreOptionsItem} onClick={() => setIsRedPacketModalVisible(true)}>
                     <GiftOutlined className={styles.moreOptionsIcon} />
                     <span>发红包</span>
@@ -3059,7 +3087,7 @@ const ChatRoom: React.FC = () => {
                 <div className={styles.mobileToolText}>摸鱼日历</div>
               </div>
             </div>
-            {(currentUser?.userRole === 'admin' || (currentUser?.level && currentUser.level >= 6)) && (
+            {(currentUser?.userRole === 'admin' || (currentUser?.level && currentUser.level >= 6) || currentUser?.vip) && (
               <div className={styles.mobileToolRow}>
                 <div className={styles.mobileTool} onClick={() => handleMobileToolClick('redPacket')}>
                   <div className={styles.mobileToolIcon}>

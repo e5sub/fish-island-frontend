@@ -846,6 +846,7 @@ declare namespace API {
     userName?: string;
     userProfile?: string;
     userRole?: string;
+    vip?: boolean;
   };
 
   type Message = {
@@ -1425,6 +1426,8 @@ declare namespace API {
     country?: string;
     id?: string;
     isAdmin?: boolean;
+    isVip?: boolean;
+    vip?: boolean;
     level?: number;
     name?: string;
     points?: number;
@@ -1533,6 +1536,7 @@ declare namespace API {
     userName?: string;
     userProfile?: string;
     userRole?: string;
+    vip?: boolean;
   };
 
   type unbindUsingDELETEParams = {
