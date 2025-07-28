@@ -164,6 +164,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseOtherUserPetVO_ = {
+    code?: number;
+    data?: OtherUserPetVO;
+    message?: string;
+  };
+
   type BaseResponsePageAvatarFrameVO_ = {
     code?: number;
     data?: PageAvatarFrameVO_;
@@ -212,6 +218,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponsePagePetSkinVO_ = {
+    code?: number;
+    data?: PagePetSkinVO_;
+    message?: string;
+  };
+
   type BaseResponsePagePost_ = {
     code?: number;
     data?: PagePost_;
@@ -221,6 +233,12 @@ declare namespace API {
   type BaseResponsePagePostVO_ = {
     code?: number;
     data?: PagePostVO_;
+    message?: string;
+  };
+
+  type BaseResponsePagePropsVO_ = {
+    code?: number;
+    data?: PagePropsVO_;
     message?: string;
   };
 
@@ -263,6 +281,12 @@ declare namespace API {
   type BaseResponsePageUserVO_ = {
     code?: number;
     data?: PageUserVO_;
+    message?: string;
+  };
+
+  type BaseResponsePetVO_ = {
+    code?: number;
+    data?: PetVO;
     message?: string;
   };
 
@@ -468,6 +492,10 @@ declare namespace API {
     response?: Response;
   };
 
+  type CreatePetRequest = {
+    name?: string;
+  };
+
   type CreateRedPacketRequest = {
     /** 红包个数 */
     count: number;
@@ -653,6 +681,11 @@ declare namespace API {
     frameId: number;
   };
 
+  type feedPetUsingPOSTParams = {
+    /** petId */
+    petId: number;
+  };
+
   type FluxString_ = {
     prefetch?: number;
   };
@@ -690,6 +723,11 @@ declare namespace API {
   type getMockInterviewByIdUsingGETParams = {
     /** id */
     id?: number;
+  };
+
+  type getOtherUserPetUsingGETParams = {
+    /** otherUserId */
+    otherUserId: number;
   };
 
   type getPlayerDetailInfoUsingGETParams = {
@@ -827,6 +865,23 @@ declare namespace API {
   type joinRoomUsingPOSTParams = {
     /** roomId */
     roomId: string;
+  };
+
+  type listPetSkinsUsingGETParams = {
+    current?: number;
+    name?: string;
+    pageSize?: number;
+    sortField?: string;
+    sortOrder?: string;
+  };
+
+  type listPropsPageUsingGETParams = {
+    current?: number;
+    name?: string;
+    pageSize?: number;
+    sortField?: string;
+    sortOrder?: string;
+    type?: string;
   };
 
   type LoginUserVO = {
@@ -1008,6 +1063,18 @@ declare namespace API {
     column?: string;
   };
 
+  type OtherUserPetVO = {
+    createTime?: string;
+    hunger?: number;
+    level?: number;
+    mood?: number;
+    name?: string;
+    petId?: number;
+    petUrl?: string;
+    skins?: PetSkinVO[];
+    userId?: number;
+  };
+
   type PageAvatarFrameVO_ = {
     countId?: string;
     current?: number;
@@ -1112,6 +1179,19 @@ declare namespace API {
     total?: number;
   };
 
+  type PagePetSkinVO_ = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: PetSkinVO[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
   type PagePost_ = {
     countId?: string;
     current?: number;
@@ -1133,6 +1213,19 @@ declare namespace API {
     orders?: OrderItem[];
     pages?: number;
     records?: PostVO[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
+  type PagePropsVO_ = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: PropsVO[];
     searchCount?: boolean;
     size?: number;
     total?: number;
@@ -1241,6 +1334,41 @@ declare namespace API {
     url: string;
   };
 
+  type patPetUsingPOSTParams = {
+    /** petId */
+    petId: number;
+  };
+
+  type PetSkinExchangeRequest = {
+    skinId?: number;
+  };
+
+  type PetSkinSetRequest = {
+    skinId?: number;
+  };
+
+  type PetSkinVO = {
+    description?: string;
+    name?: string;
+    owned?: boolean;
+    points?: number;
+    skinId?: number;
+    url?: string;
+  };
+
+  type PetVO = {
+    createTime?: string;
+    exp?: number;
+    hunger?: number;
+    level?: number;
+    mood?: number;
+    name?: string;
+    petId?: number;
+    petUrl?: string;
+    skins?: PetSkinVO[];
+    userId?: number;
+  };
+
   type PlatformBindVO = {
     avatar?: string;
     nickname?: string;
@@ -1343,6 +1471,20 @@ declare namespace API {
     viewNum?: number;
   };
 
+  type PropsPurchaseRequest = {
+    propsId?: number;
+  };
+
+  type PropsVO = {
+    createTime?: string;
+    description?: string;
+    frameId?: number;
+    imgUrl?: string;
+    name?: string;
+    points?: number;
+    type?: string;
+  };
+
   type quitRoomUsingPOSTParams = {
     /** roomId */
     roomId: string;
@@ -1427,7 +1569,6 @@ declare namespace API {
     id?: string;
     isAdmin?: boolean;
     isVip?: boolean;
-    vip?: boolean;
     level?: number;
     name?: string;
     points?: number;
@@ -1629,6 +1770,11 @@ declare namespace API {
   type unmuteUserUsingPOSTParams = {
     /** userId */
     userId: number;
+  };
+
+  type UpdatePetNameRequest = {
+    name?: string;
+    petId?: number;
   };
 
   type uploadFileByMinioUsingPOSTParams = {

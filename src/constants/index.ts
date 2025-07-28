@@ -25,7 +25,7 @@ export const SYSTEM_LOGO =
  */
 export const UNDERCOVER_ROOM_STATUS = {
   WAITING: 'WAITING',  // 等待中
-  PLAYING: 'PmLAYING',  // 游戏中
+  PLAYING: 'PLAYING',  // 游戏中
   ENDED: 'ENDED'       // 已结束
 };
 

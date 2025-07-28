@@ -34,7 +34,6 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 import {doThumbUsingPost1} from "@/services/backend/postThumbController";
 
 const {TabPane} = Tabs;
-const {Search} = Input;
 
 const PostPage: React.FC = () => {
   const [selectedTag, setSelectedTag] = useState<number | null>(null);
@@ -45,7 +44,6 @@ const PostPage: React.FC = () => {
   const [searchText, setSearchText] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentTab, setCurrentTab] = useState<string>('latest');
-  const [favourTabVisible, setFavourTabVisible] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<API.UserVO>();
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
@@ -689,11 +687,11 @@ const PostPage: React.FC = () => {
 
                         {item.thumbComment && (
                           <div className="post-content hot-comment">
-                            {item.thumbComment.content 
+                            {item.thumbComment.content
                               ? (item.thumbComment.content.match(/\[img\](.*?)\[\/img\]/i)
                                 ? '【图片】'
-                                : (item.thumbComment.content.length > 50 
-                                  ? `${item.thumbComment.content.substring(0, 50)}...` 
+                                : (item.thumbComment.content.length > 50
+                                  ? `${item.thumbComment.content.substring(0, 50)}...`
                                   : item.thumbComment.content))
                               : ''}
                           </div>
