@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Modal, Tabs, Button, Progress, Card, Avatar, Row, Col, Input, Form, message, Tooltip, Popover, Spin } from 'antd';
 import {
   HeartOutlined,
@@ -18,6 +18,7 @@ import {
 import styles from './index.less';
 import { getPetDetailUsingGet, createPetUsingPost, feedPetUsingPost, patPetUsingPost, updatePetNameUsingPost, getOtherUserPetUsingGet } from '@/services/backend/fishPetController';
 import { listPetSkinsUsingGet, exchangePetSkinUsingPost, setPetSkinUsingPost } from '@/services/backend/petSkinController';
+import { useModel } from '@umijs/max';
 
 export interface PetInfo {
   id: string;
@@ -63,10 +64,11 @@ interface PetAchievement {
 }
 
 interface MoyuPetProps {
-  visible: boolean;
-  onClose: () => void;
+  visible?: boolean;
+  onClose?: () => void;
   otherUserId?: number; // 添加查看其他用户宠物的ID
   otherUserName?: string; // 其他用户的名称
+  isPageComponent?: boolean; // 是否作为页面组件直接显示，而不是弹窗
 }
 
 // 宠物规则说明组件
@@ -84,9 +86,9 @@ const PetRules = () => (
     <div className={styles.ruleSection}>
       <h4>互动操作</h4>
       <ul>
-        <li>喂食：增加20点饥饿度和5点心情值，消耗5积分</li>
-        <li>抚摸：增加15点心情值，消耗3积分</li>
-        <li>互动操作有1分钟冷却时间</li>
+        <li>喂食：增加20点饥饿度、5点心情值和1点经验值，消耗5积分</li>
+        <li>抚摸：增加15点心情值和1点经验值，消耗3积分</li>
+        <li>互动操作没有冷却时间限制</li>
         <li>修改名称：消耗100积分</li>
       </ul>
     </div>
@@ -99,11 +101,11 @@ const PetRules = () => (
       </ul>
     </div>
     <div className={styles.ruleSection}>
-      <h4>皮肤系统</h4>
+      <h4>宠物系统</h4>
       <ul>
-        <li>可以在商店中使用积分购买不同的宠物皮肤</li>
-        <li>已购买的皮肤会显示在皮肤馆中，可以随时切换使用</li>
-        <li>皮肤一旦购买成功，永久拥有</li>
+        <li>可以在商店中使用积分购买不同的宠物</li>
+        <li>已购买的宠物会显示在宠物馆中，可以随时切换使用</li>
+        <li>宠物一旦购买成功，永久拥有</li>
       </ul>
     </div>
   </div>
@@ -123,7 +125,7 @@ const ShopTabs: React.FC<ShopTabsProps> = ({ renderSkinsList }) => {
           key: 'skin',
           label: (
             <span>
-              <SkinOutlined /> 皮肤商店
+              <SkinOutlined /> 宠物商店
             </span>
           ),
           children: renderSkinsList(true),
@@ -147,7 +149,8 @@ const ShopTabs: React.FC<ShopTabsProps> = ({ renderSkinsList }) => {
   );
 };
 
-const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherUserName }) => {
+const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherUserName, isPageComponent = false }) => {
+  const { initialState } = useModel('@@initialState');
   const [pet, setPet] = useState<API.PetVO | API.OtherUserPetVO | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [petName, setPetName] = useState('');
@@ -172,6 +175,7 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
         // 获取其他用户的宠物信息
         const res = await getOtherUserPetUsingGet({ otherUserId });
         if (res.code === 0 && res.data) {
+          // 其他用户的宠物可能没有exp属性，所以不需要处理
           setPet(res.data);
           setIsOtherUserEmptyPet(false);
         } else {
@@ -181,9 +185,24 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
           setIsOtherUserEmptyPet(true);
         }
       } else {
+        // 检查当前用户是否登录
+        if (!initialState?.currentUser) {
+          // 如果未登录，不发送请求
+          setLoading(false);
+          if (!isPageComponent) {
+            onClose?.(); // 关闭弹窗，只有在非页面组件模式下才关闭
+            message.warning('请先登录');
+          }
+          return;
+        }
+
         // 获取当前用户的宠物信息
         const res = await getPetDetailUsingGet();
         if (res.code === 0 && res.data) {
+          // 处理经验值精度问题
+          if (res.data.exp) {
+            res.data.exp = Math.floor(res.data.exp);
+          }
           setPet(res.data);
           setIsOtherUserEmptyPet(false); // 确保重置其他用户空宠物状态
           setIsCreating(false); // 确保不显示创建表单
@@ -194,7 +213,7 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
           setIsOtherUserEmptyPet(false); // 确保重置其他用户空宠物状态
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('获取宠物信息失败', error);
       message.error('获取宠物信息失败');
     } finally {
@@ -239,13 +258,17 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
       const res = await feedPetUsingPost({ petId: pet.petId });
       if (res.code === 0 && res.data) {
         message.success('喂食成功');
+        // 处理经验值精度问题
+        if (res.data.exp) {
+          res.data.exp = Math.floor(res.data.exp);
+        }
         setPet(res.data);
       } else {
         message.error(res.message || '喂食失败');
       }
     } catch (error) {
       console.error('喂食失败', error);
-      message.error('喂食失败，可能处于冷却时间');
+      message.error('喂食失败');
     } finally {
       setFeedLoading(false);
     }
@@ -260,13 +283,17 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
       const res = await patPetUsingPost({ petId: pet.petId });
       if (res.code === 0 && res.data) {
         message.success('抚摸成功');
+        // 处理经验值精度问题
+        if (res.data.exp) {
+          res.data.exp = Math.floor(res.data.exp);
+        }
         setPet(res.data);
       } else {
         message.error(res.message || '抚摸失败');
       }
     } catch (error) {
       console.error('抚摸失败', error);
-      message.error('抚摸失败，可能处于冷却时间');
+      message.error('抚摸失败');
     } finally {
       setPatLoading(false);
     }
@@ -311,17 +338,23 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
     });
   };
 
-  // 获取宠物皮肤列表
+  // 获取宠物列表
   const fetchPetSkins = async () => {
-    if (isOtherUser) return; // 如果是查看其他用户的宠物，不需要获取皮肤列表
-    
+    if (isOtherUser) return; // 如果是查看其他用户的宠物，不需要获取宠物列表
+
+    // 检查当前用户是否登录
+    if (!initialState?.currentUser) {
+      // 如果未登录，不发送请求
+      return;
+    }
+
     setSkinLoading(true);
     try {
       const res = await listPetSkinsUsingGet({
         current: 1,
         pageSize: 100,
       });
-      
+
       if (res.code === 0 && res.data?.records) {
         // 添加原皮卡片，ID为-1
         const originalSkin: API.PetSkinVO = {
@@ -332,26 +365,26 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
           points: 0,
           owned: true, // 默认拥有
         };
-        
-        // 将原皮添加到皮肤列表的开头
+
+        // 将原皮添加到宠物列表的开头
         setSkins([originalSkin, ...res.data.records]);
       } else {
-        message.error(res.message || '获取皮肤列表失败');
+        message.error(res.message || '获取宠物列表失败');
       }
     } catch (error) {
-      console.error('获取皮肤列表失败', error);
-      message.error('获取皮肤列表失败');
+      console.error('获取宠物列表失败', error);
+      message.error('获取宠物列表失败');
     } finally {
       setSkinLoading(false);
     }
   };
 
-  // 兑换皮肤
+  // 兑换宠物
   const handleExchangeSkin = async (skinId: number) => {
     // 添加二次确认
     Modal.confirm({
-      title: '确认购买皮肤',
-      content: `确定要花费 ${skins.find(skin => skin.skinId === skinId)?.points || 0} 积分购买该皮肤吗？`,
+      title: '确认购买宠物',
+      content: `确定要花费 ${skins.find(skin => skin.skinId === skinId)?.points || 0} 积分购买该宠物吗？`,
       okText: '确认购买',
       cancelText: '取消',
       onOk: async () => {
@@ -360,21 +393,21 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
           const res = await exchangePetSkinUsingPost({
             skinId
           });
-          
+
           if (res.code === 0 && res.data) {
-            message.success('购买皮肤成功');
-            // 更新皮肤列表中的owned状态
-            setSkins(skins.map(skin => 
+            message.success('购买宠物成功');
+            // 更新宠物列表中的owned状态
+            setSkins(skins.map(skin =>
               skin.skinId === skinId ? { ...skin, owned: true } : skin
             ));
-            // 重新获取宠物信息，更新皮肤列表
+            // 重新获取宠物信息，更新宠物列表
             fetchPetData();
           } else {
-            message.error(res.message || '购买皮肤失败');
+            message.error(res.message || '购买宠物失败');
           }
         } catch (error) {
-          console.error('购买皮肤失败', error);
-          message.error('购买皮肤失败，可能是积分不足');
+          console.error('购买宠物失败', error);
+          message.error('购买宠物失败，可能是积分不足');
         } finally {
           setExchangeLoading(null);
         }
@@ -382,10 +415,10 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
     });
   };
 
-  // 设置当前皮肤
+  // 设置当前宠物
   const handleSetCurrentSkin = async (skinId: number) => {
     if (!pet?.petId) return;
-    
+
     setSetCurrentSkinLoading(skinId);
     try {
       // 如果是原皮(ID为-1)，需要特殊处理
@@ -395,7 +428,7 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
         const res = await setPetSkinUsingPost({
           skinId: -1
         });
-        
+
         if (res.code === 0 && res.data) {
           message.success('设置原皮成功');
           setPet(res.data);
@@ -403,39 +436,66 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
           message.error(res.message || '设置原皮失败');
         }
       } else {
-        // 正常皮肤处理
+        // 正常宠物处理
         const res = await setPetSkinUsingPost({
           skinId
         });
-        
+
         if (res.code === 0 && res.data) {
-          message.success('设置皮肤成功');
+          message.success('设置宠物成功');
           setPet(res.data);
         } else {
-          message.error(res.message || '设置皮肤失败');
+          message.error(res.message || '设置宠物失败');
         }
       }
     } catch (error) {
-      console.error('设置皮肤失败', error);
-      message.error('设置皮肤失败');
+      console.error('设置宠物失败', error);
+      message.error('设置宠物失败');
     } finally {
       setSetCurrentSkinLoading(null);
     }
   };
 
   useEffect(() => {
-    if (visible) {
+    if (isPageComponent || visible) {
       // 重置状态，避免显示上一次的结果
       setPet(null);
       setIsCreating(false);
       setIsOtherUserEmptyPet(false);
       fetchPetData();
-      fetchPetSkins(); // 获取皮肤列表
+      fetchPetSkins(); // 获取宠物列表
     }
-  }, [visible, otherUserId]);
+  }, [visible, otherUserId, isPageComponent]);
 
   // 创建宠物表单
   if (isCreating) {
+    if (isPageComponent) {
+      return (
+        <div style={{ padding: '20px 0' }}>
+          <Form layout="vertical">
+            <Form.Item label="给你的宠物起个名字">
+              <Input
+                placeholder="请输入宠物名称"
+                value={petName}
+                onChange={(e) => setPetName(e.target.value)}
+                maxLength={10}
+              />
+            </Form.Item>
+            <Form.Item>
+              <Button
+                type="primary"
+                onClick={handleCreatePet}
+                loading={loading}
+                block
+              >
+                创建宠物
+              </Button>
+            </Form.Item>
+          </Form>
+        </div>
+      );
+    }
+
     return (
       <Modal
         title="创建你的摸鱼宠物"
@@ -472,6 +532,14 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
 
   // 加载中或没有宠物数据
   if (loading) {
+    if (isPageComponent) {
+      return (
+        <div style={{ textAlign: 'center', padding: '50px 0' }}>
+          加载中...
+        </div>
+      );
+    }
+
     return (
       <Modal
         title="我的摸鱼宠物"
@@ -489,6 +557,15 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
 
   // 显示其他用户的空宠物状态
   if (isOtherUserEmptyPet) {
+    if (isPageComponent) {
+      return (
+        <div style={{ textAlign: 'center', padding: '50px 0' }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}><SmileOutlined /></div>
+          <div style={{ fontSize: '16px' }}>该用户还没有养宠物哦~</div>
+        </div>
+      );
+    }
+
     return (
       <Modal
         title={
@@ -511,11 +588,11 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
     );
   }
 
-  // 渲染皮肤列表
+  // 渲染宠物列表
   const renderSkinsList = (showAll = false) => {
-    // 如果showAll为true，显示所有皮肤（商店），否则只显示已拥有的皮肤（皮肤馆）
+    // 如果showAll为true，显示所有宠物（商店），否则只显示已拥有的宠物（宠物馆）
     const filteredSkins = showAll ? skins : skins.filter(skin => skin.owned);
-    
+
     if (skinLoading) {
       return (
         <div style={{ textAlign: 'center', padding: '50px 0' }}>
@@ -523,7 +600,7 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
         </div>
       );
     }
-    
+
     if (filteredSkins.length === 0) {
       return (
         <div className={styles.shopEmpty} style={{ textAlign: 'center', padding: '50px 0' }}>
@@ -531,12 +608,12 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
             {showAll ? '🛒' : '👕'}
           </div>
           <div className={styles.emptyText} style={{ fontSize: '16px' }}>
-            {showAll ? '暂无可购买的皮肤' : '暂无已拥有的皮肤'}
+            {showAll ? '暂无可购买的宠物' : '暂无已拥有的宠物'}
           </div>
         </div>
       );
     }
-    
+
     return (
       <div className={styles.skinsList}>
         <Row gutter={[12, 12]}>
@@ -554,7 +631,7 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
                       className={styles.skinImage}
                     />
                     {skin.owned && (
-                      (skin.skinId === -1 && (!pet?.petUrl || pet.petUrl === skin.url)) || 
+                      (skin.skinId === -1 && (!pet?.petUrl || pet.petUrl === skin.url)) ||
                       (skin.skinId !== -1 && pet?.petUrl === skin.url)
                     ) && (
                       <div className={styles.currentSkinBadge}>
@@ -577,14 +654,14 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
                     <Button
                       type="primary"
                       size="small"
-                      disabled={(skin.skinId === -1 && (!pet?.petUrl || pet.petUrl === skin.url)) || 
+                      disabled={(skin.skinId === -1 && (!pet?.petUrl || pet.petUrl === skin.url)) ||
                                (skin.skinId !== -1 && pet?.petUrl === skin.url)}
                       onClick={() => handleSetCurrentSkin(skin.skinId || 0)}
                       loading={setCurrentSkinLoading === skin.skinId}
-                      icon={(skin.skinId === -1 && (!pet?.petUrl || pet.petUrl === skin.url)) || 
+                      icon={(skin.skinId === -1 && (!pet?.petUrl || pet.petUrl === skin.url)) ||
                             (skin.skinId !== -1 && pet?.petUrl === skin.url) ? <CheckOutlined /> : <SkinOutlined />}
                     >
-                      {(skin.skinId === -1 && (!pet?.petUrl || pet.petUrl === skin.url)) || 
+                      {(skin.skinId === -1 && (!pet?.petUrl || pet.petUrl === skin.url)) ||
                        (skin.skinId !== -1 && pet?.petUrl === skin.url) ? '当前使用中' : '使用'}
                     </Button>
                   ) : showAll ? (
@@ -606,6 +683,347 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
       </div>
     );
   };
+
+  // 根据isPageComponent决定是否渲染为Modal或直接内容
+  if (isPageComponent) {
+    return (
+      <div className={styles.petContainer}>
+        <div className={styles.pageComponentHeader}>
+          <h2 className={styles.pageComponentTitle}>🐟</h2>
+          <Popover
+            content={<PetRules />}
+            title="宠物系统说明"
+            placement="bottom"
+            trigger="click"
+            overlayStyle={{ width: 300 }}
+            overlayInnerStyle={{
+              backgroundColor: '#fff',
+              boxShadow: '0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05)'
+            }}
+          >
+            <Button
+              type="text"
+              icon={<QuestionCircleOutlined />}
+              size="small"
+              className={styles.titleHelpButton}
+            >
+              系统说明
+            </Button>
+          </Popover>
+        </div>
+        <div className={styles.petInfo}>
+          <div className={styles.petAvatar}>
+            <Avatar src={pet?.petUrl} size={100} />
+          </div>
+          <div className={styles.petDetails}>
+            <div className={styles.petName}>
+              <span className={styles.name}>
+                {pet?.name}
+                {!isOtherUser && !isRenaming ? (
+                  <Tooltip title="修改名称需要消耗100积分">
+                    <Button
+                      type="link"
+                      size="small"
+                      onClick={() => setIsRenaming(true)}
+                      icon={<EditOutlined />}
+                      className={styles.renameButton}
+                    >
+                      修改
+                    </Button>
+                  </Tooltip>
+                ) : isRenaming ? (
+                  <div className={styles.renameContainer}>
+                    <Input
+                      size="small"
+                      placeholder="请输入新名称"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      maxLength={10}
+                      autoFocus
+                      className={styles.renameInput}
+                      prefix={<EditOutlined />}
+                      suffix={
+                        <span className={styles.charCount}>
+                          {newName.length}/10
+                        </span>
+                      }
+                    />
+                    <div className={styles.renameActions}>
+                      <Button
+                        size="small"
+                        type="primary"
+                        onClick={handleRename}
+                        loading={renameLoading}
+                        icon={<CheckOutlined />}
+                      >
+                        确定
+                      </Button>
+                      <Button
+                        size="small"
+                        onClick={() => {setIsRenaming(false); setNewName('');}}
+                        icon={<CloseOutlined />}
+                        className={styles.cancelButton}
+                      >
+                        取消
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </span>
+              <span className={styles.level}>Lv.{pet?.level || 1}</span>
+            </div>
+            <div className={styles.petStatus}>
+              <div className={styles.statusItem}>
+                <span className={styles.statusLabel}>
+                  <HeartOutlined /> 心情:
+                </span>
+                <div className={styles.statusProgressContainer}>
+                  <Progress
+                    percent={(pet?.mood || 0) / 100 * 100}
+                    status="active"
+                    strokeColor="#ff7875"
+                    size="small"
+                  />
+                  <Tooltip title="心情值影响宠物的积分产出和经验获取">
+                    <InfoCircleOutlined className={styles.statusInfo} />
+                  </Tooltip>
+                </div>
+              </div>
+              <div className={styles.statusItem}>
+                <span className={styles.statusLabel}>
+                  <ThunderboltOutlined /> 饥饿:
+                </span>
+                <div className={styles.statusProgressContainer}>
+                  <Progress
+                    percent={(pet?.hunger || 0) / 100 * 100}
+                    status="active"
+                    strokeColor="#52c41a"
+                    size="small"
+                  />
+                  <Tooltip title="饥饿值影响宠物的积分产出和经验获取">
+                    <InfoCircleOutlined className={styles.statusInfo} />
+                  </Tooltip>
+                </div>
+              </div>
+              <div className={styles.statusItem}>
+                <span className={styles.statusLabel}>
+                  <ExperimentOutlined /> 经验:
+                </span>
+                <div className={styles.statusProgressContainer}>
+                  {pet && (
+                    <>
+                      <Progress
+                        percent={(pet as any).exp ? (Math.floor((pet as any).exp) / 100 * 100) : 0}
+                        status="active"
+                        strokeColor="#1890ff"
+                        size="small"
+                        format={() => `${Math.floor((pet as any).exp || 0)}/${100}`}
+                      />
+                    </>
+                  )}
+                  <Tooltip title="每100点经验可提升1级">
+                    <InfoCircleOutlined className={styles.statusInfo} />
+                  </Tooltip>
+                </div>
+              </div>
+            </div>
+            {!isOtherUser && (
+              <div className={styles.petActions} style={{ marginTop: 10 }}>
+                <Button
+                  type="primary"
+                  onClick={handleFeed}
+                  loading={feedLoading}
+                  style={{ marginRight: 8 }}
+                  icon={<GiftOutlined />}
+                  className={styles.actionButton}
+                >
+                  喂食 <span className={styles.costBadge}>-5积分</span>
+                  <span className={styles.expBadge}>+1经验</span>
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={handlePat}
+                  loading={patLoading}
+                  icon={<HeartOutlined />}
+                  className={styles.actionButton}
+                >
+                  抚摸 <span className={styles.costBadge}>-3积分</span>
+                  <span className={styles.expBadge}>+1经验</span>
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Tabs
+          defaultActiveKey={isOtherUser ? "skills" : "items"}
+          items={[
+            ...(isOtherUser ? [] : [{
+              key: 'items',
+              label: (
+                <span>
+                  <GiftOutlined /> 物品
+                </span>
+              ),
+              children: (
+                <div className={styles.itemsContainer}>
+                  <Row gutter={[16, 16]}>
+                    <Col span={8}>
+                      <Card className={styles.itemCard}>
+                        <div className={styles.itemIcon}>🍞</div>
+                        <div className={styles.itemName}>鱼饵</div>
+                        <div className={styles.itemCount}>数量: 5</div>
+                        <div className={styles.itemDesc}>恢复20点饥饿值</div>
+                        <div className={styles.itemActions}>
+                          <Button
+                            type="primary"
+                            size="small"
+                            disabled
+                          >
+                            敬请期待
+                          </Button>
+                        </div>
+                      </Card>
+                    </Col>
+                    <Col span={8}>
+                      <Card className={styles.itemCard}>
+                        <div className={styles.itemIcon}>🎾</div>
+                        <div className={styles.itemName}>玩具球</div>
+                        <div className={styles.itemCount}>数量: 3</div>
+                        <div className={styles.itemDesc}>提高15点心情值</div>
+                        <div className={styles.itemActions}>
+                          <Button
+                            type="primary"
+                            size="small"
+                            disabled
+                          >
+                            敬请期待
+                          </Button>
+                        </div>
+                      </Card>
+                    </Col>
+                  </Row>
+                </div>
+              ),
+            }]),
+            {
+              key: 'skills',
+              label: (
+                <span>
+                  <ThunderboltOutlined /> 技能
+                </span>
+              ),
+              children: (
+                <div className={styles.skillsContainer}>
+                  <div className={styles.shopEmpty} style={{ textAlign: 'center', padding: '50px 0' }}>
+                    <div className={styles.emptyIcon} style={{ fontSize: '48px', marginBottom: '20px' }}>⚡</div>
+                    <div className={styles.emptyText} style={{ fontSize: '16px' }}>技能系统即将开放，敬请期待！</div>
+                  </div>
+                </div>
+              ),
+            },
+            ...(isOtherUser ? [] : [{
+              key: 'shop',
+              label: (
+                <span>
+                  <ShoppingOutlined /> 商店
+                </span>
+              ),
+              children: (
+                <div className={styles.shopContainer}>
+                  {isOtherUser ? (
+                    <div className={styles.shopEmpty}>
+                      <div className={styles.emptyIcon}>🛒</div>
+                      <div className={styles.emptyText}>无法查看其他用户的商店</div>
+                    </div>
+                  ) : (
+                    <ShopTabs renderSkinsList={renderSkinsList} />
+                  )}
+                </div>
+              ),
+            }]),
+            {
+              key: 'skin',
+              label: (
+                <span>
+                  <SkinOutlined /> 宠物馆
+                </span>
+              ),
+              children: (
+                <div className={styles.skinContainer}>
+                  {isOtherUser ? (
+                    <div className={styles.otherUserSkins}>
+                      {pet?.skins && pet.skins.length > 0 ? (
+                        <div className={styles.skinsList}>
+                          <Row gutter={[12, 12]}>
+                            {pet.skins.map((skin) => (
+                              <Col span={8} key={skin.skinId}>
+                                <Card
+                                  className={`${styles.skinCard} ${styles.ownedSkin}`}
+                                  hoverable
+                                  size="small"
+                                  cover={
+                                    <div className={styles.skinImageContainer}>
+                                      <img
+                                        alt={skin.name}
+                                        src={skin.url}
+                                        className={styles.skinImage}
+                                      />
+                                      {(skin.skinId === -1 && (!pet?.petUrl || pet.petUrl === skin.url)) ||
+                                       (skin.skinId !== -1 && pet?.petUrl === skin.url) ? (
+                                        <div className={styles.currentSkinBadge}>
+                                          当前使用
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  }
+                                  bodyStyle={{ padding: '12px 16px' }}
+                                >
+                                  <Card.Meta
+                                    title={<div className={styles.skinTitle}>{skin.name}</div>}
+                                    description={<div className={styles.skinDescription}>{skin.description}</div>}
+                                  />
+                                </Card>
+                              </Col>
+                            ))}
+                          </Row>
+                        </div>
+                      ) : (
+                        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                          <div style={{ fontSize: '16px', marginBottom: '20px' }}>
+                            当前宠物
+                          </div>
+                          <Avatar src={pet?.petUrl} size={100} />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    renderSkinsList(false)
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: 'achievements',
+              label: (
+                <span>
+                  <TrophyOutlined /> 成就
+                </span>
+              ),
+              children: (
+                <div className={styles.achievementsContainer}>
+                  <div className={styles.shopEmpty} style={{ textAlign: 'center', padding: '50px 0' }}>
+                    <div className={styles.emptyIcon} style={{ fontSize: '48px', marginBottom: '20px' }}>🏆</div>
+                    <div className={styles.emptyText} style={{ fontSize: '16px' }}>成就系统即将开放，敬请期待！</div>
+                  </div>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
+    );
+  }
 
   return (
     <Modal
@@ -742,12 +1160,15 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
                 </span>
                 <div className={styles.statusProgressContainer}>
                   {pet && (
-                    <Progress
-                      percent={(pet as any).exp ? ((pet as any).exp / 100 * 100) : 0}
-                      status="active"
-                      strokeColor="#1890ff"
-                      size="small"
-                    />
+                    <>
+                      <Progress
+                        percent={(pet as any).exp ? (Math.floor((pet as any).exp) / 100 * 100) : 0}
+                        status="active"
+                        strokeColor="#1890ff"
+                        size="small"
+                        format={() => `${Math.floor((pet as any).exp || 0)}/${100}`}
+                      />
+                    </>
                   )}
                   <Tooltip title="每100点经验可提升1级">
                     <InfoCircleOutlined className={styles.statusInfo} />
@@ -757,11 +1178,26 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
             </div>
             {!isOtherUser && (
               <div className={styles.petActions} style={{ marginTop: 10 }}>
-                <Button type="primary" onClick={handleFeed} loading={feedLoading} style={{ marginRight: 8 }}>
+                <Button
+                  type="primary"
+                  onClick={handleFeed}
+                  loading={feedLoading}
+                  style={{ marginRight: 8 }}
+                  icon={<GiftOutlined />}
+                  className={styles.actionButton}
+                >
                   喂食 <span className={styles.costBadge}>-5积分</span>
+                  <span className={styles.expBadge}>+1经验</span>
                 </Button>
-                <Button type="primary" onClick={handlePat} loading={patLoading}>
+                <Button
+                  type="primary"
+                  onClick={handlePat}
+                  loading={patLoading}
+                  icon={<HeartOutlined />}
+                  className={styles.actionButton}
+                >
                   抚摸 <span className={styles.costBadge}>-3积分</span>
+                  <span className={styles.expBadge}>+1经验</span>
                 </Button>
               </div>
             )}
@@ -859,7 +1295,7 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
               key: 'skin',
               label: (
                 <span>
-                  <SkinOutlined /> 皮肤馆
+                  <SkinOutlined /> 宠物馆
                 </span>
               ),
               children: (
@@ -882,7 +1318,7 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
                                         src={skin.url}
                                         className={styles.skinImage}
                                       />
-                                      {(skin.skinId === -1 && (!pet?.petUrl || pet.petUrl === skin.url)) || 
+                                      {(skin.skinId === -1 && (!pet?.petUrl || pet.petUrl === skin.url)) ||
                                        (skin.skinId !== -1 && pet?.petUrl === skin.url) ? (
                                         <div className={styles.currentSkinBadge}>
                                           当前使用
@@ -904,7 +1340,7 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
                       ) : (
                         <div style={{ textAlign: 'center', padding: '20px 0' }}>
                           <div style={{ fontSize: '16px', marginBottom: '20px' }}>
-                            当前皮肤
+                            当前宠物
                           </div>
                           <Avatar src={pet?.petUrl} size={100} />
                         </div>
@@ -936,6 +1372,216 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
         />
       </div>
     </Modal>
+  );
+};
+
+// 添加一个新的MiniPet组件，用于在聊天输入框上方显示
+export interface MiniPetProps {
+  onClick?: () => void;
+}
+
+// 使用全局变量缓存宠物数据，避免组件重新渲染时重复请求
+let cachedPet: API.PetVO | null = null;
+let lastFetchTime = 0;
+const CACHE_DURATION = 30 * 60 * 1000; // 30分钟缓存时间
+
+export const MiniPet: React.FC<MiniPetProps> = ({ onClick }) => {
+  const { initialState } = useModel('@@initialState');
+  const [pet, setPet] = useState<API.PetVO | null>(cachedPet);
+  const [loading, setLoading] = useState(!cachedPet);
+  const [position, setPosition] = useState(() => {
+    // 从localStorage读取保存的位置，如果没有则使用默认值
+    const savedPosition = localStorage.getItem('miniPetPosition');
+    return savedPosition ? JSON.parse(savedPosition) : { x: 20, y: 0 };
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const [wasDragging, setWasDragging] = useState(false);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const petRef = useRef<HTMLDivElement>(null);
+  const initialPosition = useRef({ x: 0, y: 0 });
+
+  // 获取宠物数据，使用缓存减少请求
+  const fetchPetData = async (force = false) => {
+    // 检查用户是否登录
+    if (!initialState?.currentUser) {
+      // 如果用户未登录，不发送请求
+      setLoading(false);
+      return;
+    }
+
+    // 如果有缓存且未过期，直接使用缓存数据
+    const now = Date.now();
+    if (!force && cachedPet && (now - lastFetchTime < CACHE_DURATION)) {
+      setPet(cachedPet);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await getPetDetailUsingGet();
+      if (res.code === 0 && res.data) {
+        // 更新缓存和状态
+        cachedPet = res.data;
+        lastFetchTime = now;
+        setPet(res.data);
+      }
+    } catch (error) {
+      console.error('获取宠物信息失败', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 处理拖动开始
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+
+    let clientX, clientY;
+    if ('touches' in e) {
+      // 触摸事件
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      // 鼠标事件
+      clientX = e.clientX;
+      clientY = e.clientY;
+      e.preventDefault(); // 只在鼠标事件中阻止默认行为
+    }
+
+    // 记录初始位置，用于判断是否真的发生了拖动
+    initialPosition.current = { ...position };
+
+    setIsDragging(true);
+    setStartPos({
+      x: clientX - position.x,
+      y: clientY - position.y
+    });
+  };
+
+  // 处理拖动过程
+  const handleMouseMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isDragging) return;
+
+    let clientX, clientY;
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const newX = clientX - startPos.x;
+    const newY = clientY - startPos.y;
+
+    // 限制宠物不能拖出屏幕
+    const petElement = petRef.current;
+    if (petElement) {
+      const petWidth = petElement.offsetWidth;
+      const petHeight = petElement.offsetHeight;
+      const maxX = window.innerWidth - petWidth;
+      const maxY = window.innerHeight - petHeight;
+
+      const boundedX = Math.max(0, Math.min(newX, maxX));
+      const boundedY = Math.max(0, Math.min(newY, maxY));
+
+      setPosition({ x: boundedX, y: boundedY });
+    }
+  }, [isDragging, startPos]);
+
+  // 处理拖动结束
+  const handleMouseUp = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false);
+
+      // 判断是否真的发生了拖动
+      const hasMoved = initialPosition.current.x !== position.x || initialPosition.current.y !== position.y;
+
+      if (hasMoved) {
+        // 标记刚刚完成了拖动操作
+        setWasDragging(true);
+        // 保存位置到localStorage
+        localStorage.setItem('miniPetPosition', JSON.stringify(position));
+
+        // 100ms后重置拖动标记，这样点击事件才能再次被触发
+        // 减少时间以提高响应速度
+        setTimeout(() => {
+          setWasDragging(false);
+        }, 100);
+      }
+    }
+  }, [isDragging, position]);
+
+  // 处理点击事件
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // 只有在非拖动状态下才触发点击事件
+    if (!isDragging && !wasDragging && onClick) {
+      onClick();
+    }
+  };
+
+  // 添加单独的点击处理函数，确保点击能正常触发
+  const handlePetClick = () => {
+    if (!isDragging && !wasDragging && onClick) {
+      onClick();
+    }
+  };
+
+  useEffect(() => {
+    // 初始加载时获取数据
+    fetchPetData();
+
+    // 每30分钟刷新一次宠物数据，减少请求频率
+    const intervalId = setInterval(() => fetchPetData(true), CACHE_DURATION);
+
+    // 添加拖动相关的事件监听
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleMouseMove, { passive: false });
+    window.addEventListener('touchend', handleMouseUp);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
+
+  if (loading || !pet) {
+    return null;
+  }
+
+  return (
+    <div
+      ref={petRef}
+      className={`${styles.miniPet} ${isDragging ? styles.dragging : ''}`}
+      style={{
+        position: 'fixed',
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        bottom: 'auto',
+        right: 'auto',
+        zIndex: 1000,
+        cursor: isDragging ? 'grabbing' : 'grab'
+      }}
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleMouseDown}
+      onClick={handlePetClick} // 使用专门的点击处理函数
+    >
+      <div onClick={handlePetClick} style={{ width: '100%', height: '100%' }}>
+        <Tooltip title={`${pet.name} (Lv.${pet.level}) - 可拖动调整位置`}>
+          <img
+            src={pet.petUrl}
+            alt="我的宠物"
+            className={styles.miniPetImage}
+            draggable={false}
+          />
+        </Tooltip>
+      </div>
+    </div>
   );
 };
 

@@ -14,6 +14,7 @@ export default [
   {path: '/post/edit/:id', layout: false, component: './Post/Edit', requireAuth: true},
   {path: '/post/:id',component: './Post/Detail', requireAuth: true},
   {path: '/reader', icon: 'BookOutlined', component: './Reader', name: '摸鱼阅读', requireAuth: true},
+  {path: '/pet', icon: 'HeartOutlined', component: './Pet', name: '摸鱼宠物', requireAuth: true},
   { path: '/draw', icon: 'FundViewOutlined', component: './Draw', name: '你画我猜', requireAuth: true },
   {path: '/draw/:id',component: './Draw/Detail', requireAuth: true},
   {
@@ -152,7 +153,9 @@ export default [
       {path: '/admin', redirect: '/admin/user', requireAuth: true},
       {icon: 'LineChartOutlined', path: '/admin/data', component: './Admin/Data', name: '数据分析', requireAuth: true},
       {icon: 'table', path: '/admin/user', component: './Admin/User', name: '用户管理', requireAuth: true},
+      {icon: 'BulbOutlined', path: '/admin/title', component: './Admin/User/Title', name: '称号管理', requireAuth: true},
       {icon: 'TagsOutlined', path: '/admin/tags', component: './Admin/Tags', name: '标签管理', requireAuth: true},
+      {icon: 'BookOutlined', path: '/admin/word/library', component: './Admin/Word/Library', name: '词库管理', requireAuth: true},
     ],
   },
   {path: '/', redirect: '/index', requireAuth: true},

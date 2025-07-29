@@ -534,7 +534,12 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu}) => {
       const res = await signInUsingPost();
       if (res.code === 0) {
         setHasCheckedIn(true);
-        message.success('摸鱼打卡成功！获得 10 积分 ');
+        // 根据用户VIP状态显示不同的提示信息
+        if (currentUser?.vip) {
+          message.success('摸鱼打卡成功！获得 20（10 点可用积分）积分');
+        } else {
+          message.success('摸鱼打卡成功！获得 10 积分');
+        }
         // 更新用户信息
         const userInfo = await getLoginUserUsingGet();
         if (userInfo.data) {

@@ -2,7 +2,7 @@ import zhData from '@emoji-mart/data/i18n/zh.json';
 import EmoticonPicker from '@/components/EmoticonPicker';
 import MessageContent from '@/components/MessageContent';
 import RoomInfoCard from '@/components/RoomInfoCard';
-import MoyuPet from '@/components/MoyuPet';
+import MoyuPet, { MiniPet } from '@/components/MoyuPet';
 import {
   getOnlineUserListUsingGet,
   listMessageVoByPageUsingPost,
@@ -2563,6 +2563,12 @@ const ChatRoom: React.FC = () => {
 
   return (
     <div className={styles.chatRoom}>
+      {/* 可拖动宠物组件 */}
+      <MiniPet onClick={() => {
+        setCurrentPetUserId(null);
+        setIsPetModalVisible(true);
+      }} />
+      
       {/* 摸鱼宠物组件 */}
       <MoyuPet
         visible={isPetModalVisible}
@@ -2750,7 +2756,7 @@ const ChatRoom: React.FC = () => {
         </div>
       </div>
 
-      <div className={styles.inputArea}>
+              <div className={styles.inputArea}>
         {quotedMessage && (
           <div className={styles.quotePreview}>
             <div className={styles.quotePreviewContent}>

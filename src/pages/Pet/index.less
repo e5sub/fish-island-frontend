@@ -1,0 +1,366 @@
+.petPageContainer {
+  padding: 24px;
+  min-height: calc(100vh - 64px);
+  
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
+}
+
+// 敬请期待样式
+.comingSoonContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.comingSoonIcon {
+  font-size: 64px;
+  margin-bottom: 24px;
+  animation: bounce 2s infinite;
+}
+
+.comingSoonTitle {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1890ff;
+  margin-bottom: 12px;
+}
+
+.comingSoonDesc {
+  font-size: 16px;
+  color: #666;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-20px);
+  }
+  60% {
+    transform: translateY(-10px);
+  }
+}
+
+.petTabsCard {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  
+  :global(.ant-card-body) {
+    padding: 0;
+  }
+  
+  :global(.ant-tabs-nav) {
+    margin: 0;
+    padding: 0 16px;
+    background-color: #fafafa;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  :global(.ant-tabs-content-holder) {
+    padding: 0;
+  }
+  
+  :global(.ant-tabs-tabpane) {
+    padding: 0;
+  }
+}
+
+.petComponentWrapper {
+  background: #fff;
+  border-radius: 0;
+  overflow: hidden;
+  padding: 0;
+  
+  :global(.ant-card-body) {
+    padding: 0;
+  }
+  
+  // 为宠物组件添加内边距
+  :global(.petContainer) {
+    padding: 20px !important;
+  }
+  
+  // 为页面组件模式下的标题添加更多空间
+  :global(.pageComponentHeader) {
+    padding: 0 20px 10px 20px !important;
+    margin-bottom: 15px !important;
+    border-bottom: 1px solid #f0f0f0;
+  }
+}
+
+.petHeader {
+  padding: 16px 20px;
+  background-color: #fff;
+}
+
+.petTitle {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1890ff;
+  display: flex;
+  align-items: center;
+  
+  .petIcon {
+    margin-right: 8px;
+    font-size: 20px;
+  }
+}
+
+// 调整行间距
+:global(.ant-row) {
+  margin-bottom: 16px !important;
+  }
+  
+.rankingCard {
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  
+  :global(.ant-card-head) {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 0 16px;
+    background-color: #fafafa;
+  }
+  
+  :global(.ant-card-body) {
+    padding: 0;
+  }
+}
+
+.rankingTitle {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: #1890ff;
+  
+  .rankingIcon {
+    margin-right: 8px;
+    font-size: 20px;
+    color: #ffd700;
+  }
+}
+
+.updateTime {
+  color: #999;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.rankingTableContainer {
+  padding: 0;
+  overflow: hidden;
+}
+
+.rankingTable {
+  :global(.ant-table-thead > tr > th) {
+    background-color: #f7f7f7;
+    padding: 12px 16px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  :global(.ant-table-tbody > tr > td) {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  :global(.ant-table-tbody > tr:hover > td) {
+    background-color: #f0f7ff;
+  }
+  
+  :global(.ant-table-tbody > tr:last-child > td) {
+    border-bottom: none;
+  }
+}
+
+// 排名样式
+.rankFirst, .rankSecond, .rankThird, .rankNormal {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin: 0 auto;
+}
+
+.rankFirst {
+  background: linear-gradient(135deg, #ffe259 0%, #ffa751 100%);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(255, 167, 81, 0.4);
+  position: relative;
+  
+  &::after {
+    content: '👑';
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+  }
+}
+
+.rankSecond {
+  background: linear-gradient(135deg, #E0E0E0 0%, #B0B0B0 100%);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(176, 176, 176, 0.4);
+}
+
+.rankThird {
+  background: linear-gradient(135deg, #D1913C 0%, #A57046 100%);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(165, 112, 70, 0.4);
+}
+
+.rankNormal {
+  background: #f0f0f0;
+  color: #666;
+}
+
+// 宠物信息样式
+.petInfo {
+  display: flex;
+  align-items: center;
+  }
+  
+.petAvatar {
+  margin-right: 12px;
+  border: 2px solid #f0f0f0;
+    }
+
+.petNameContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.petName {
+  font-weight: bold;
+  color: #333;
+  font-size: 14px;
+}
+
+.petOwner {
+  color: #999;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.levelBadge {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+}
+
+// 行样式
+.firstRow {
+  background-color: rgba(255, 215, 0, 0.05);
+  
+  td {
+    border-left: 3px solid #ffd700;
+  }
+}
+
+.secondRow {
+  background-color: rgba(192, 192, 192, 0.05);
+  
+  td {
+    border-left: 3px solid #c0c0c0;
+  }
+}
+
+.thirdRow {
+  background-color: rgba(205, 127, 50, 0.05);
+  
+  td {
+    border-left: 3px solid #cd7f32;
+  }
+}
+
+// 排行榜容器样式
+.rankingContainer {
+  padding: 16px;
+  
+  @media (max-width: 768px) {
+    padding: 8px;
+  }
+}
+
+.rankingTip {
+  margin-bottom: 12px;
+  color: #666;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  
+  &::before {
+    content: "💡";
+    margin-right: 8px;
+    font-size: 16px;
+  }
+}
+
+.rankTable {
+  :global(.ant-table-thead > tr > th) {
+    background-color: #f7f7f7;
+    padding: 12px 16px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  :global(.ant-table-tbody > tr > td) {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  :global(.ant-table-tbody > tr:hover > td) {
+    background-color: #f0f7ff;
+  }
+  
+  :global(.ant-table-tbody > tr) {
+    transition: all 0.3s;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+      z-index: 1;
+    }
+  }
+  
+  :global(.ant-table-tbody > tr:last-child > td) {
+    border-bottom: none;
+  }
+  
+  // 前三名行样式
+  :global(.ant-table-tbody > tr:nth-child(1)) {
+    background-color: rgba(255, 215, 0, 0.05);
+  }
+  
+  :global(.ant-table-tbody > tr:nth-child(2)) {
+    background-color: rgba(192, 192, 192, 0.05);
+  }
+  
+  :global(.ant-table-tbody > tr:nth-child(3)) {
+    background-color: rgba(205, 127, 50, 0.05);
+  }
+}
+
+@media (max-width: 768px) {
+  .petComponentWrapper {
+    margin: 0;
+    border-radius: 0;
+  }
+} 

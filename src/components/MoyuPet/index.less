@@ -6,21 +6,21 @@
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     border-color: #1890ff;
-    
+
     .skinTitle {
       color: #1890ff;
     }
   }
-  
+
   &.ownedSkin {
     border-color: #52c41a;
     background-color: rgba(82, 196, 26, 0.03);
-    
+
     &::before {
       content: '已拥有';
       position: absolute;
@@ -35,7 +35,7 @@
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
   }
-  
+
   .skinImageContainer {
     position: relative;
     height: 100px;
@@ -45,7 +45,7 @@
     background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
     overflow: hidden;
     padding: 10px;
-    
+
     &::after {
       content: '';
       position: absolute;
@@ -56,7 +56,7 @@
       background: radial-gradient(circle, transparent 50%, rgba(0, 0, 0, 0.03) 100%);
       pointer-events: none;
     }
-    
+
     .skinImage {
       max-width: 80%;
       max-height: 80%;
@@ -67,12 +67,12 @@
       filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
       z-index: 1;
     }
-    
+
     &:hover .skinImage {
       transform: scale(1.05);
       filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
     }
-    
+
     .currentSkinBadge {
       position: absolute;
       bottom: 0;
@@ -88,7 +88,7 @@
       backdrop-filter: blur(2px);
     }
   }
-  
+
   .skinTitle {
     font-size: 15px;
     font-weight: bold;
@@ -100,7 +100,7 @@
     padding-top: 5px;
     transition: color 0.3s ease;
   }
-  
+
   .skinDescription {
     font-size: 12px;
     color: #666;
@@ -112,7 +112,7 @@
     -webkit-box-orient: vertical;
     margin: 5px 0;
   }
-  
+
   .skinPrice {
     margin-top: 8px;
     font-weight: bold;
@@ -120,35 +120,35 @@
     font-size: 13px;
     display: flex;
     align-items: center;
-    
+
     &::before {
       content: '💰';
       margin-right: 5px;
       font-size: 14px;
     }
   }
-  
+
   .skinActions {
     margin-top: 10px;
     display: flex;
     justify-content: center;
-    
+
     button {
       border-radius: 15px;
       padding: 0 15px;
       font-weight: 500;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       transition: all 0.3s ease;
-      
+
       &:hover {
         transform: translateY(-1px);
         box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
       }
-      
+
       &:active {
         transform: translateY(0);
       }
-      
+
       &[disabled] {
         color: rgba(0, 0, 0, 0.25);
         background-color: #f5f5f5;
@@ -174,24 +174,24 @@
     font-size: 24px;
     margin-right: 10px;
   }
-  
+
   .titleHelpButton {
     margin-left: 5px;
     color: #1890ff;
     padding: 0;
     height: 20px;
     width: 20px;
-    
+
     &:hover {
       color: #40a9ff;
       background-color: transparent;
     }
   }
-  
+
   .rulesButton {
     margin-left: auto;
     color: #1890ff;
-    
+
     &:hover {
       color: #40a9ff;
       background-color: rgba(24, 144, 255, 0.1);
@@ -203,27 +203,27 @@
   max-height: 400px;
   overflow-y: auto;
   padding-right: 10px;
-  
+
   h3 {
     text-align: center;
     margin-bottom: 16px;
     color: #1890ff;
     font-weight: bold;
   }
-  
+
   .ruleSection {
     margin-bottom: 16px;
-    
+
     h4 {
       font-weight: bold;
       margin-bottom: 8px;
       padding-bottom: 4px;
       border-bottom: 1px solid #f0f0f0;
     }
-    
+
     ul {
       padding-left: 20px;
-      
+
       li {
         margin-bottom: 6px;
         line-height: 1.5;
@@ -239,17 +239,17 @@
     box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
     border-radius: 8px;
   }
-  
+
   .ant-popover-title {
     font-weight: bold;
     border-bottom: 1px solid #f0f0f0;
     background-color: #fafafa;
   }
-  
+
   .ant-popover-inner-content {
     padding: 12px 16px;
   }
-  
+
   .ant-popover-arrow-content {
     background-color: #fff;
   }
@@ -282,14 +282,14 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
-  
+
   .name {
     font-size: 18px;
     font-weight: bold;
     display: flex;
     align-items: center;
   }
-  
+
   .level {
     background-color: #1890ff;
     color: white;
@@ -301,7 +301,7 @@
   .renameButton {
     margin-left: 8px;
     padding: 0 4px;
-    
+
     &:hover {
       background-color: rgba(24, 144, 255, 0.1);
     }
@@ -317,7 +317,7 @@
   .renameInput {
     width: 180px;
     border-radius: 4px;
-    
+
     &:focus {
       box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
     }
@@ -335,7 +335,7 @@
 
   .cancelButton {
     color: #999;
-    
+
     &:hover {
       color: #666;
       border-color: #d9d9d9;
@@ -349,28 +349,28 @@
     position: relative;
     display: flex;
     align-items: center;
-    
+
     .statusLabel {
       display: inline-block;
       width: 60px;
       margin-right: 10px;
     }
-    
+
     .statusProgressContainer {
       flex: 1;
       display: flex;
       align-items: center;
-      
+
       :global(.ant-progress) {
         flex: 1;
       }
     }
-    
+
     .statusInfo {
       margin-left: 8px;
       color: #999;
       cursor: pointer;
-      
+
       &:hover {
         color: #1890ff;
       }
@@ -380,11 +380,48 @@
 
 .petActions {
   margin-top: 15px;
-  
+
   .costBadge {
     font-size: 12px;
     opacity: 0.8;
     margin-left: 4px;
+    background-color: rgba(0, 0, 0, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+    padding: 0 4px;
+    border-radius: 10px;
+  }
+
+  .expBadge {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.85);
+    background-color: rgba(82, 196, 26, 0.8);
+    padding: 0 4px;
+    border-radius: 10px;
+    margin-left: 4px;
+  }
+
+  .actionButton {
+    min-width: 120px;
+    border-radius: 20px;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    .anticon {
+      margin-right: 6px;
+      font-size: 16px;
+    }
   }
 }
 
@@ -395,33 +432,33 @@
 .itemCard {
   text-align: center;
   transition: all 0.3s;
-  
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   }
-  
+
   .itemIcon {
     font-size: 32px;
     margin-bottom: 10px;
   }
-  
+
   .itemName {
     font-weight: bold;
     margin-bottom: 5px;
   }
-  
+
   .itemCount {
     color: #1890ff;
     margin-bottom: 5px;
   }
-  
+
   .itemDesc {
     color: #666;
     margin-bottom: 10px;
     font-size: 12px;
   }
-  
+
   .itemActions {
     margin-top: 10px;
   }
@@ -429,10 +466,10 @@
 
 .shopContainer {
   padding: 20px 0;
-  
+
   .shopSection {
     margin-bottom: 30px;
-    
+
     .sectionTitle {
       font-size: 16px;
       font-weight: bold;
@@ -442,12 +479,12 @@
       color: #1890ff;
     }
   }
-  
+
   // 确保商店中的皮肤列表使用相同的样式
   .skinsList {
     margin-top: 10px;
   }
-  
+
   .skinCard {
     .skinCardStyles();
   }
@@ -455,15 +492,15 @@
 
 .skinContainer {
   padding: 10px 0;
-  
+
   .skinsList {
     margin-top: 10px;
   }
-  
+
   .skinCard {
     .skinCardStyles();
   }
-  
+
   .otherUserSkins {
     text-align: center;
     padding: 20px 0;
@@ -473,12 +510,12 @@
 .shopEmpty {
   text-align: center;
   padding: 50px 0;
-  
+
   .emptyIcon {
     font-size: 48px;
     margin-bottom: 20px;
   }
-  
+
   .emptyText {
     font-size: 16px;
     color: #999;
@@ -493,27 +530,27 @@
   display: flex;
   align-items: center;
   margin-bottom: 15px;
-  
+
   .achievementIcon {
     font-size: 32px;
     margin-right: 15px;
   }
-  
+
   .achievementInfo {
     flex: 1;
   }
-  
+
   .achievementName {
     font-weight: bold;
     margin-bottom: 5px;
   }
-  
+
   .achievementDesc {
     color: #666;
     margin-bottom: 5px;
     font-size: 12px;
   }
-  
+
   .achievementProgress {
     text-align: right;
     color: #1890ff;
@@ -538,6 +575,72 @@
   animation: float 3s ease-in-out infinite;
 }
 
+// 添加迷你宠物样式
+.miniPet {
+  position: fixed;
+  z-index: 1000;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  user-select: none;
+  touch-action: none;
+  transition: none; /* 移除过渡动画 */
+
+  &:hover {
+    /* 移除悬停时的缩放效果 */
+
+    &::after {
+      content: '拖动或点击';
+      position: absolute;
+      bottom: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0.8;
+    }
+  }
+
+  &.dragging {
+    opacity: 0.8;
+    /* 移除拖动时的缩放效果 */
+
+    &::after {
+      content: '';
+      display: none;
+    }
+  }
+
+  .miniPetImage {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    animation: none; /* 移除呼吸动画 */
+    pointer-events: none; /* 防止图片干扰拖动 */
+  }
+
+  @media screen and (max-width: 768px) {
+    .miniPetImage {
+      width: 50px;
+      height: 50px;
+    }
+  }
+}
+
+@keyframes breathe {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
 // 响应式调整
 @media (max-width: 576px) {
   .petInfo {
@@ -559,4 +662,24 @@
       margin-bottom: 5px;
     }
   }
-} 
+}
+
+// 页面组件模式下的样式
+.pageComponentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 10px;
+
+  .pageComponentTitle {
+    font-size: 20px;
+    font-weight: bold;
+    color: #1890ff;
+    margin: 0;
+
+    &::before {
+      margin-right: 8px;
+    }
+  }
+}

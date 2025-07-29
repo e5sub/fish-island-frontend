@@ -1,4 +1,11 @@
 declare namespace API {
+  type addTitleToUserUsingPOSTParams = {
+    /** titleId */
+    titleId: number;
+    /** userId */
+    userId: number;
+  };
+
   type AvatarFrame = {
     createTime?: string;
     frameId?: number;
@@ -101,6 +108,12 @@ declare namespace API {
   type BaseResponseListNewUserDataWebVO_ = {
     code?: number;
     data?: NewUserDataWebVO[];
+    message?: string;
+  };
+
+  type BaseResponseListPetRankVO_ = {
+    code?: number;
+    data?: PetRankVO[];
     message?: string;
   };
 
@@ -266,6 +279,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponsePageUserTitle_ = {
+    code?: number;
+    data?: PageUserTitle_;
+    message?: string;
+  };
+
   type BaseResponsePageUserVip_ = {
     code?: number;
     data?: PageUserVip_;
@@ -281,6 +300,12 @@ declare namespace API {
   type BaseResponsePageUserVO_ = {
     code?: number;
     data?: PageUserVO_;
+    message?: string;
+  };
+
+  type BaseResponsePageWordLibrary_ = {
+    code?: number;
+    data?: PageWordLibrary_;
     message?: string;
   };
 
@@ -356,6 +381,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseUserTitle_ = {
+    code?: number;
+    data?: UserTitle;
+    message?: string;
+  };
+
   type BaseResponseUserVipVO_ = {
     code?: number;
     data?: UserVipVO;
@@ -371,6 +402,12 @@ declare namespace API {
   type BaseResponseWebParseVO_ = {
     code?: number;
     data?: WebParseVO;
+    message?: string;
+  };
+
+  type BaseResponseWordLibrary_ = {
+    code?: number;
+    data?: WordLibrary;
     message?: string;
   };
 
@@ -730,6 +767,11 @@ declare namespace API {
     otherUserId: number;
   };
 
+  type getPetRankListUsingGETParams = {
+    /** limit */
+    limit?: number;
+  };
+
   type getPlayerDetailInfoUsingGETParams = {
     /** roomId */
     roomId: string;
@@ -799,12 +841,22 @@ declare namespace API {
     userId: number;
   };
 
+  type getUserTitleByIdUsingGETParams = {
+    /** id */
+    id?: number;
+  };
+
   type getUserVipVOByIdUsingGETParams = {
     /** id */
     id?: number;
   };
 
   type getUserVoByIdUsingGETParams = {
+    /** id */
+    id?: number;
+  };
+
+  type getWordLibraryByIdUsingGETParams = {
     /** id */
     id?: number;
   };
@@ -882,6 +934,11 @@ declare namespace API {
     sortField?: string;
     sortOrder?: string;
     type?: string;
+  };
+
+  type listUserTitlesByUserIdUsingGETParams = {
+    /** userId */
+    userId: number;
   };
 
   type LoginUserVO = {
@@ -1065,6 +1122,7 @@ declare namespace API {
 
   type OtherUserPetVO = {
     createTime?: string;
+    exp?: number;
     hunger?: number;
     level?: number;
     mood?: number;
@@ -1290,6 +1348,19 @@ declare namespace API {
     total?: number;
   };
 
+  type PageUserTitle_ = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: UserTitle[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
   type PageUserVip_ = {
     countId?: string;
     current?: number;
@@ -1329,6 +1400,19 @@ declare namespace API {
     total?: number;
   };
 
+  type PageWordLibrary_ = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: WordLibrary[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
   type parseWebPageUsingGETParams = {
     /** url */
     url: string;
@@ -1337,6 +1421,18 @@ declare namespace API {
   type patPetUsingPOSTParams = {
     /** petId */
     petId: number;
+  };
+
+  type PetRankVO = {
+    exp?: number;
+    level?: number;
+    name?: string;
+    petId?: number;
+    petUrl?: string;
+    rank?: number;
+    userAvatar?: string;
+    userId?: number;
+    userName?: string;
   };
 
   type PetSkinExchangeRequest = {
@@ -1521,6 +1617,13 @@ declare namespace API {
   type removeRoomUsingPOSTParams = {
     /** roomId */
     roomId: string;
+  };
+
+  type removeTitleFromUserUsingPOSTParams = {
+    /** titleId */
+    titleId: number;
+    /** userId */
+    userId: number;
   };
 
   type renderAuthUsingGETParams = {
@@ -1922,6 +2025,24 @@ declare namespace API {
     updateTime?: string;
   };
 
+  type UserTitleAddRequest = {
+    name?: string;
+  };
+
+  type UserTitleQueryRequest = {
+    current?: number;
+    name?: string;
+    pageSize?: number;
+    sortField?: string;
+    sortOrder?: string;
+    titleId?: number;
+  };
+
+  type UserTitleUpdateRequest = {
+    name?: string;
+    titleId?: number;
+  };
+
   type UserUpdateMyRequest = {
     userAvatar?: string;
     userName?: string;
@@ -2022,5 +2143,38 @@ declare namespace API {
     description?: string;
     favicon?: string;
     title?: string;
+  };
+
+  type WordLibrary = {
+    category?: string;
+    createTime?: string;
+    id?: number;
+    updateTime?: string;
+    word?: string;
+    wordType?: string;
+  };
+
+  type WordLibraryAddRequest = {
+    category?: string;
+    word?: string;
+    wordType?: string;
+  };
+
+  type WordLibraryQueryRequest = {
+    category?: string;
+    current?: number;
+    id?: number;
+    pageSize?: number;
+    sortField?: string;
+    sortOrder?: string;
+    word?: string;
+    wordType?: string;
+  };
+
+  type WordLibraryUpdateRequest = {
+    category?: string;
+    id?: number;
+    word?: string;
+    wordType?: string;
   };
 }

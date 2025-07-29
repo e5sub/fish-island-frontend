@@ -9,6 +9,7 @@ import {Button, message, Popconfirm, Space, Typography} from 'antd';
 import React, {useEffect, useRef, useState} from 'react';
 import {useLocation} from "@umijs/max";
 import moment from "moment";
+import TitleModal from "@/pages/Admin/User/Title/components/TitleModal";
 
 /**
  * 用户管理页面
@@ -20,6 +21,9 @@ const UserAdminPage: React.FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState<boolean>(false);
   // 是否显示更新窗口
   const [updateModalVisible, setUpdateModalVisible] = useState<boolean>(false);
+  // 是否显示查看称号窗口
+  const [titleModalVisible, setTitleModalVisible] = useState<boolean>(false);
+
   const actionRef = useRef<ActionType>();
   // 当前用户点击的数据
   const [currentRow, setCurrentRow] = useState<API.User>();
@@ -185,6 +189,14 @@ const UserAdminPage: React.FC = () => {
           >
             修改
           </Typography.Link>
+          <Typography.Link
+            onClick={() => {
+              setCurrentRow(record);
+              setTitleModalVisible(true);
+            }}
+          >
+            查看称号
+          </Typography.Link>
           <Popconfirm
             title="确定要删除该用户吗？"
             onConfirm={() => handleDelete(record)}
@@ -268,6 +280,13 @@ const UserAdminPage: React.FC = () => {
         }}
         onCancel={() => {
           setUpdateModalVisible(false);
+        }}
+      />
+      <TitleModal
+        visible={titleModalVisible}
+        currentUser={currentRow}
+        onClose={() => {
+          setTitleModalVisible(false);
         }}
       />
     </PageContainer>
