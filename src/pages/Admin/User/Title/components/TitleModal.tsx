@@ -41,7 +41,12 @@ const TitleModal: React.FC<{
     try {
       const res = await listUserTitlesByUserIdUsingGet({ userId });
       if (res.code === 0) {
-        setUserTitles(res.data || []);
+        // 过滤掉ID为2-10的称号
+        const filteredData = (res.data || []).filter(title => {
+          const titleId = title.titleId ?? 0;
+          return !(titleId >= 2 && titleId <= 10);
+        });
+        setUserTitles(filteredData);
       } else {
         message.error('获取用户称号失败: ' + res.message);
       }
@@ -63,12 +68,17 @@ const TitleModal: React.FC<{
         name,
       });
       if (res.code === 0) {
-        setAllTitles(res.data?.records || []);
-        setFilteredTitles(res.data?.records || []);
+        // 过滤掉ID为2-10的称号
+        const filteredData = (res.data?.records || []).filter(title => {
+          const titleId = title.titleId ?? 0;
+          return !(titleId >= 2 && titleId <= 10);
+        });
+        setAllTitles(filteredData);
+        setFilteredTitles(filteredData);
         setAllTitlesPagination(prev => ({
           ...prev,
           current: page,
-          total: res.data?.total || 0,
+          total: filteredData.length || 0, // 更新总数为过滤后的数量
         }));
       } else {
         message.error('获取称号列表失败: ' + res.message);
