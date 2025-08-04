@@ -199,9 +199,15 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
         // 获取当前用户的宠物信息
         const res = await getPetDetailUsingGet();
         if (res.code === 0 && res.data) {
-          // 处理经验值精度问题
+          // 处理数值精度问题
           if (res.data.exp) {
             res.data.exp = Math.floor(res.data.exp);
+          }
+          if (res.data.mood) {
+            res.data.mood = Math.floor(res.data.mood);
+          }
+          if (res.data.hunger) {
+            res.data.hunger = Math.floor(res.data.hunger);
           }
           setPet(res.data);
           setIsOtherUserEmptyPet(false); // 确保重置其他用户空宠物状态
@@ -238,8 +244,6 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
         message.success('创建宠物成功');
         setIsCreating(false);
         fetchPetData(); // 重新获取宠物数据
-      } else {
-        message.error(res.message || '创建宠物失败');
       }
     } catch (error) {
       console.error('创建宠物失败', error);
@@ -258,17 +262,19 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
       const res = await feedPetUsingPost({ petId: pet.petId });
       if (res.code === 0 && res.data) {
         message.success('喂食成功');
-        // 处理经验值精度问题
+        // 处理数值精度问题
         if (res.data.exp) {
           res.data.exp = Math.floor(res.data.exp);
         }
+        if (res.data.mood) {
+          res.data.mood = Math.floor(res.data.mood);
+        }
+        if (res.data.hunger) {
+          res.data.hunger = Math.floor(res.data.hunger);
+        }
         setPet(res.data);
-      } else {
-        message.error(res.message || '喂食失败');
       }
     } catch (error) {
-      console.error('喂食失败', error);
-      message.error('喂食失败');
     } finally {
       setFeedLoading(false);
     }
@@ -283,17 +289,20 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
       const res = await patPetUsingPost({ petId: pet.petId });
       if (res.code === 0 && res.data) {
         message.success('抚摸成功');
-        // 处理经验值精度问题
+        // 处理数值精度问题
         if (res.data.exp) {
           res.data.exp = Math.floor(res.data.exp);
         }
+        if (res.data.mood) {
+          res.data.mood = Math.floor(res.data.mood);
+        }
+        if (res.data.hunger) {
+          res.data.hunger = Math.floor(res.data.hunger);
+        }
         setPet(res.data);
-      } else {
-        message.error(res.message || '抚摸失败');
       }
     } catch (error) {
       console.error('抚摸失败', error);
-      message.error('抚摸失败');
     } finally {
       setPatLoading(false);
     }
@@ -779,10 +788,11 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
                 </span>
                 <div className={styles.statusProgressContainer}>
                   <Progress
-                    percent={(pet?.mood || 0) / 100 * 100}
+                    percent={((pet?.mood || 0) / ((pet as any)?.maxMood || 100)) * 100}
                     status="active"
                     strokeColor="#ff7875"
                     size="small"
+                    format={() => `${pet?.mood || 0}/${(pet as any)?.maxMood || 100}`}
                   />
                   <Tooltip title="心情值影响宠物的积分产出和经验获取">
                     <InfoCircleOutlined className={styles.statusInfo} />
@@ -795,10 +805,11 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
                 </span>
                 <div className={styles.statusProgressContainer}>
                   <Progress
-                    percent={(pet?.hunger || 0) / 100 * 100}
+                    percent={((pet?.hunger || 0) / ((pet as any)?.maxHunger || 100)) * 100}
                     status="active"
                     strokeColor="#52c41a"
                     size="small"
+                    format={() => `${pet?.hunger || 0}/${(pet as any)?.maxHunger || 100}`}
                   />
                   <Tooltip title="饥饿值影响宠物的积分产出和经验获取">
                     <InfoCircleOutlined className={styles.statusInfo} />
@@ -813,11 +824,11 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
                   {pet && (
                     <>
                       <Progress
-                        percent={(pet as any).exp ? (Math.floor((pet as any).exp) / 100 * 100) : 0}
+                        percent={(pet as any).exp ? (Math.floor((pet as any).exp) / ((pet as any)?.maxExp || 100) * 100) : 0}
                         status="active"
                         strokeColor="#1890ff"
                         size="small"
-                        format={() => `${Math.floor((pet as any).exp || 0)}/${100}`}
+                        format={() => `${Math.floor((pet as any).exp || 0)}/${(pet as any)?.maxExp || 100}`}
                       />
                     </>
                   )}
@@ -1128,10 +1139,11 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
                 </span>
                 <div className={styles.statusProgressContainer}>
                   <Progress
-                    percent={(pet?.mood || 0) / 100 * 100}
+                    percent={((pet?.mood || 0) / ((pet as any)?.maxMood || 100)) * 100}
                     status="active"
                     strokeColor="#ff7875"
                     size="small"
+                    format={() => `${pet?.mood || 0}/${(pet as any)?.maxMood || 100}`}
                   />
                   <Tooltip title="心情值影响宠物的积分产出和经验获取">
                     <InfoCircleOutlined className={styles.statusInfo} />
@@ -1144,10 +1156,11 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
                 </span>
                 <div className={styles.statusProgressContainer}>
                   <Progress
-                    percent={(pet?.hunger || 0) / 100 * 100}
+                    percent={((pet?.hunger || 0) / ((pet as any)?.maxHunger || 100)) * 100}
                     status="active"
                     strokeColor="#52c41a"
                     size="small"
+                    format={() => `${pet?.hunger || 0}/${(pet as any)?.maxHunger || 100}`}
                   />
                   <Tooltip title="饥饿值影响宠物的积分产出和经验获取">
                     <InfoCircleOutlined className={styles.statusInfo} />
@@ -1162,11 +1175,11 @@ const MoyuPet: React.FC<MoyuPetProps> = ({ visible, onClose, otherUserId, otherU
                   {pet && (
                     <>
                       <Progress
-                        percent={(pet as any).exp ? (Math.floor((pet as any).exp) / 100 * 100) : 0}
+                        percent={(pet as any).exp ? (Math.floor((pet as any).exp) / ((pet as any)?.maxExp || 100) * 100) : 0}
                         status="active"
                         strokeColor="#1890ff"
                         size="small"
-                        format={() => `${Math.floor((pet as any).exp || 0)}/${100}`}
+                        format={() => `${Math.floor((pet as any).exp || 0)}/${(pet as any)?.maxExp || 100}`}
                       />
                     </>
                   )}

@@ -77,6 +77,8 @@
   border-radius: 0;
   overflow: hidden;
   padding: 0;
+  // 设置最小高度，防止内容切换时（如加载、创建、显示）导致父容器高度变化，引起页面跳动
+  min-height: 620px;
   
   :global(.ant-card-body) {
     padding: 0;

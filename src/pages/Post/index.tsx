@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Avatar, Badge, Button, Card, Input, List, message, Modal, Skeleton, Spin, Tabs, Tag} from 'antd';
+import {Avatar, Badge, Button, Card, Col, Input, List, message, Modal, Row, Skeleton, Spin, Tabs, Tag} from 'antd';
 import type {SizeType} from 'antd/es/config-provider/SizeContext';
 import {
   ClockCircleOutlined,
@@ -218,21 +218,21 @@ const PostPage: React.FC = () => {
   };
 
   // 设置帖子为精华
-  const handleSetFeatured = async (postId: string, currentStatus: boolean | undefined) => {
+  const handleSetFeatured = async (postId: string, currentStatus: number | undefined) => {
     if (!currentUser || currentUser.userRole !== 'admin') return;
 
     try {
       await setFeaturedStatusUsingPost({
-        id: postId,
-        isFeatured: currentStatus ? 0 : 1
+        id: postId as any,
+        isFeatured: currentStatus === 1 ? 0 : 1
       });
 
-      message.success(`已${currentStatus ? '取消加精' : '设为精华'}帖子`);
+      message.success(`已${currentStatus === 1 ? '取消加精' : '设为精华'}帖子`);
 
       // 更新本地状态
       setPosts(posts.map(post =>
-        post.id === postId
-          ? {...post, isFeatured: !currentStatus}
+        post.id === Number(postId)
+          ? {...post, isFeatured: currentStatus === 1 ? 0 : 1}
           : post
       ));
     } catch (error) {
@@ -396,28 +396,34 @@ const PostPage: React.FC = () => {
   }, []);
 
   // 在组件内添加点赞处理函数
-  const handleThumbPost = async (postId: string, currentThumbStatus: boolean, currentThumbNum: number) => {
+  const handleThumbPost = async (postId: string) => {
     if (!currentUser) {
       message.warning('请先登录');
       return;
     }
 
     try {
-      await doThumbUsingPost1({
-        postId: postId
-      } as any);
+      const res = await doThumbUsingPost1({
+        postId: postId as any,
+      });
 
-      // 更新该帖子的点赞状态和数量
-      setPosts(posts.map(post => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            hasThumb: !currentThumbStatus,
-            thumbNum: currentThumbStatus ? (currentThumbNum - 1) : (currentThumbNum + 1)
-          };
-        }
-        return post;
-      }));
+      if (res.code === 0) {
+        setPosts(prevPosts =>
+          prevPosts.map(post => {
+            if (String(post.id) === postId) {
+              const newHasThumb = !post.hasThumb;
+              return {
+                ...post,
+                hasThumb: newHasThumb,
+                thumbNum: (post.thumbNum ?? 0) + (newHasThumb ? 1 : -1),
+              };
+            }
+            return post;
+          }),
+        );
+      } else {
+        message.error(res.message || '操作失败');
+      }
     } catch (error) {
       message.error('操作失败');
     }
@@ -438,305 +444,311 @@ const PostPage: React.FC = () => {
         <p>确定要删除这篇帖子吗？删除后将无法恢复。</p>
       </Modal>
 
-      <div className="post-container">
-        <div className="post-main">
-          <Card className="post-filter-card">
-            <div className="filter-container">
+      <Row className="post-container" gutter={[24, 24]}>
+        {/* 主内容区 */}
+        <Col xs={24} md={16} lg={18}>
+          <div className="post-main">
+            <Card className="post-filter-card">
+              <div className="filter-container">
 
-              <div className="category-filter">
-                <span className="filter-label">标签：</span>
-                <div className="tag-container">
-                  <Tag
-                    color="orange"
-                    className={selectedTag === null ? 'category-tag active' : 'category-tag'}
-                    onClick={() => handleTagClick(null)}
-                  >
-                    全部
-                  </Tag>
-                  {tags.map(tag => (
+                <div className="category-filter">
+                  <span className="filter-label">标签：</span>
+                  <div className="tag-container">
                     <Tag
-                      key={tag.id}
-                      color={getTagColor(tag)}
-                      className={selectedTag === tag.id ? 'category-tag active' : 'category-tag'}
-                      onClick={() => handleTagClick(tag.id || null)}
+                      color="orange"
+                      className={selectedTag === null ? 'category-tag active' : 'category-tag'}
+                      onClick={() => handleTagClick(null)}
                     >
-                      {renderTagIcon(tag)}
-                      {tag.tagsName}
+                      全部
                     </Tag>
-                  ))}
+                    {tags.map(tag => (
+                      <Tag
+                        key={tag.id}
+                        color={getTagColor(tag)}
+                        className={selectedTag === tag.id ? 'category-tag active' : 'category-tag'}
+                        onClick={() => handleTagClick(tag.id || null)}
+                      >
+                        {renderTagIcon(tag)}
+                        {tag.tagsName}
+                      </Tag>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              {/* 搜索框开关 */}
-              <div className="search-toggle">
-                <Button
-                  type="link"
-                  onClick={toggleSearchVisible}
-                  icon={searchVisible ? <UpOutlined/> : <FilterOutlined/>}
-                >
-                  {searchVisible ? '收起搜索' : '展开搜索'}
-                </Button>
-              </div>
-
-              {/* 可收起的搜索框 */}
-              {searchVisible && (
-                <div className="post-search">
-                  <Input
-                    placeholder="搜索帖子"
-                    prefix={<SearchOutlined className="search-icon"/>}
-                    allowClear
-                    className="search-input"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    onPressEnter={() => handleSearch(searchText)}
-                  />
+                {/* 搜索框开关 */}
+                <div className="search-toggle">
                   <Button
-                    type="primary"
-                    icon={<SearchOutlined/>}
-                    className="search-button"
-                    onClick={() => handleSearch(searchText)}
+                    type="link"
+                    onClick={toggleSearchVisible}
+                    icon={searchVisible ? <UpOutlined/> : <FilterOutlined/>}
                   >
-                    {!isMobile && '搜索'}
+                    {searchVisible ? '收起搜索' : '展开搜索'}
                   </Button>
                 </div>
-              )}
-            </div>
-          </Card>
 
-          <Card className="post-list-card">
-            <div className="post-list-header">
-              <div className="tabs-container">
-                <Tabs
-                  defaultActiveKey="latest"
-                  className="post-tabs"
-                  activeKey={currentTab}
-                  onChange={handleTabChange}
-                  size={isMobile ? "small" as SizeType : "middle" as SizeType}
-                >
-                  <TabPane
-                    tab={<span>{!isMobile && <ClockCircleOutlined/>} 最新发布</span>}
-                    key="latest"
-                  />
-                  <TabPane
-                    tab={<span>{!isMobile && <FireOutlined/>} 热门讨论</span>}
-                    key="hot"
-                  />
-                  <TabPane
-                    tab={<span>{!isMobile && <RiseOutlined/>} 精华内容</span>}
-                    key="featured"
-                  />
-                  <TabPane
-                    tab={<span>{!isMobile && <UserOutlined/>} 我的帖子</span>}
-                    key="my"
-                  />
-                  <TabPane
-                    tab={<span>{!isMobile && <StarOutlined/>} 我的收藏</span>}
-                    key="myFavour"
-                  />
-                </Tabs>
-              </div>
-              <div className="button-container">
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined/>}
-                  onClick={handleCreatePost}
-                >
-                  {isMobile ? "发布" : "发布帖子"}
-                </Button>
-              </div>
-            </div>
-
-            {loading && posts.length === 0 ? (
-              renderPostSkeleton()
-            ) : (
-              <InfiniteScroll
-                dataLength={posts.length}
-                next={loadMoreData}
-                hasMore={hasMore}
-                loader={
-                  <div className="loading-container">
-                    <Spin size="large" tip="加载中..."/>
-                  </div>
-                }
-                endMessage={
-                  <div className="loading-container" style={{color: '#999'}}>
-                    没有更多帖子了
-                  </div>
-                }
-              >
-                <List
-                  itemLayout="vertical"
-                  size="large"
-                  dataSource={posts}
-                  renderItem={item => (
-                    <List.Item
-                      key={item.id}
-                      className="post-item"
-                      onClick={() => history.push(`/post/${String(item.id)}`)}
-                      style={{cursor: 'pointer'}}
-                      actions={[
-                        // 在移动端不显示阅读量、点赞数和评论数
-                        !isMobile &&
-                        <span onClick={(e) => e.stopPropagation()}><EyeOutlined/> 浏览 {item.viewNum || 0}</span>,
-                        !isMobile &&
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleThumbPost(String(item.id), item.hasThumb || false, item.thumbNum || 0);
-                          }}
-                          className={item.hasThumb ? 'like-button active' : 'like-button'}
-                        >
-                          {item.hasThumb ? <LikeFilled/> : <LikeOutlined/>} 点赞 {item.thumbNum || 0}
-                        </span>,
-                        !isMobile &&
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            history.push(`/post/${String(item.id)}`);
-                          }}
-                          className="comment-link"
-                        >
-                          <MessageOutlined/> 评论 {item.commentNum || 0}
-                        </span>,
-                        canDeletePost(item) && (
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              history.push(`/post/edit/${item.id}`);
-                            }}
-                            className="edit-action"
-                          >
-                            <EditOutlined style={{color: '#1890ff'}}/> {isMobile ? '' : '编辑'}
-                          </span>
-                        ),
-                        // 加精按钮（仅管理员可见）
-                        currentUser?.userRole === 'admin' && (
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSetFeatured(String(item.id), item.isFeatured);
-                            }}
-                            className="featured-action"
-                            style={{color: item.isFeatured ? '#999' : 'gold'}}
-                          >
-                            <ThunderboltOutlined style={{color: item.isFeatured ? '#999' : 'gold'}}/>
-                            {isMobile ? '' : (item.isFeatured ? '取消加精' : '设为精华')}
-                          </span>
-                        ),
-                        canDeletePost(item) && (
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // 直接传递原始ID，避免Number()转换导致精度丢失
-                              showDeleteConfirm(item.id);
-                            }}
-                            className="delete-action"
-                          >
-                            <DeleteOutlined style={{color: '#ff4d4f'}}/> {isMobile ? '' : '删除'}
-                          </span>
-                        ),
-                      ].filter(Boolean)}
+                {/* 可收起的搜索框 */}
+                {searchVisible && (
+                  <div className="post-search">
+                    <Input
+                      placeholder="搜索帖子"
+                      prefix={<SearchOutlined className="search-icon"/>}
+                      allowClear
+                      className="search-input"
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      onPressEnter={() => handleSearch(searchText)}
+                    />
+                    <Button
+                      type="primary"
+                      icon={<SearchOutlined/>}
+                      className="search-button"
+                      onClick={() => handleSearch(searchText)}
                     >
-                      <div className="post-item-header">
-                        <Avatar src={item.user?.userAvatar || 'https://joeschmoe.io/api/v1/random'}
-                                size={isMobile ? 32 : 48}/>
-                        <div className="post-author-info">
-                          {/* 精选图片容器 - 绝对定位在右上角 */}
-                          {Boolean(item.isFeatured) && (
-                            <div className="featured-image-container">
-                              <img
-                                src={require('/public/img/Featured.png')}
-                                alt="精选"
-                                className="featured-image"
-                              />
+                      {!isMobile && '搜索'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            <Card className="post-list-card">
+              <div className="post-list-header">
+                <div className="tabs-container">
+                  <Tabs
+                    defaultActiveKey="latest"
+                    className="post-tabs"
+                    activeKey={currentTab}
+                    onChange={handleTabChange}
+                    size={isMobile ? "small" as SizeType : "middle" as SizeType}
+                  >
+                    <TabPane
+                      tab={<span>{!isMobile && <ClockCircleOutlined/>} 最新发布</span>}
+                      key="latest"
+                    />
+                    <TabPane
+                      tab={<span>{!isMobile && <FireOutlined/>} 热门讨论</span>}
+                      key="hot"
+                    />
+                    <TabPane
+                      tab={<span>{!isMobile && <RiseOutlined/>} 精华内容</span>}
+                      key="featured"
+                    />
+                    <TabPane
+                      tab={<span>{!isMobile && <UserOutlined/>} 我的帖子</span>}
+                      key="my"
+                    />
+                    <TabPane
+                      tab={<span>{!isMobile && <StarOutlined/>} 我的收藏</span>}
+                      key="myFavour"
+                    />
+                  </Tabs>
+                </div>
+                <div className="button-container">
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined/>}
+                    onClick={handleCreatePost}
+                  >
+                    {isMobile ? "发布" : "发布帖子"}
+                  </Button>
+                </div>
+              </div>
+
+              {loading && posts.length === 0 ? (
+                renderPostSkeleton()
+              ) : (
+                <InfiniteScroll
+                  dataLength={posts.length}
+                  next={loadMoreData}
+                  hasMore={hasMore}
+                  loader={
+                    <div className="loading-container">
+                      <Spin size="large" tip="加载中..."/>
+                    </div>
+                  }
+                  endMessage={
+                    <div className="loading-container" style={{color: '#999'}}>
+                      没有更多帖子了
+                    </div>
+                  }
+                >
+                  <List
+                    itemLayout="vertical"
+                    size="large"
+                    dataSource={posts}
+                    renderItem={item => (
+                      <List.Item
+                        key={item.id}
+                        className="post-item"
+                        onClick={() => history.push(`/post/${String(item.id)}`)}
+                        style={{cursor: 'pointer'}}
+                        actions={[
+                          // 在移动端不显示阅读量、点赞数和评论数
+                          !isMobile &&
+                          <span onClick={(e) => e.stopPropagation()}><EyeOutlined/> 浏览 {item.viewNum || 0}</span>,
+                          !isMobile &&
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleThumbPost(String(item.id));
+                            }}
+                            className={item.hasThumb ? 'like-button active' : 'like-button'}
+                          >
+                            {item.hasThumb ? <LikeFilled/> : <LikeOutlined/>} 点赞 {item.thumbNum || 0}
+                          </span>,
+                          !isMobile &&
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              history.push(`/post/${String(item.id)}`);
+                            }}
+                            className="comment-link"
+                          >
+                            <MessageOutlined/> 评论 {item.commentNum || 0}
+                          </span>,
+                          canDeletePost(item) && (
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                history.push(`/post/edit/${item.id}`);
+                              }}
+                              className="edit-action"
+                            >
+                              <EditOutlined style={{color: '#1890ff'}}/> {isMobile ? '' : '编辑'}
+                            </span>
+                          ),
+                          // 加精按钮（仅管理员可见）
+                          currentUser?.userRole === 'admin' && (
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSetFeatured(String(item.id), item.isFeatured);
+                              }}
+                              className="featured-action"
+                              style={{color: item.isFeatured === 1 ? '#999' : 'gold'}}
+                            >
+                              <ThunderboltOutlined style={{color: item.isFeatured === 1 ? '#999' : 'gold'}}/>
+                              {isMobile ? '' : (item.isFeatured === 1 ? '取消加精' : '设为精华')}
+                            </span>
+                          ),
+                          canDeletePost(item) && (
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // 直接传递原始ID，避免Number()转换导致精度丢失
+                                showDeleteConfirm(item.id);
+                              }}
+                              className="delete-action"
+                            >
+                              <DeleteOutlined style={{color: '#ff4d4f'}}/> {isMobile ? '' : '删除'}
+                            </span>
+                          ),
+                        ].filter(Boolean)}
+                      >
+                        <div className="post-item-header">
+                          <Avatar src={item.user?.userAvatar || 'https://joeschmoe.io/api/v1/random'}
+                                  size={isMobile ? 32 : 48}/>
+                          <div className="post-author-info">
+                            {/* 精选图片容器 - 绝对定位在右上角 */}
+                            {Boolean(item.isFeatured) && (
+                              <div className="featured-image-container">
+                                <img
+                                  src={require('/public/img/Featured.png')}
+                                  alt="精选"
+                                  className="featured-image"
+                                />
+                              </div>
+                            )}
+                            <div className="author-name">
+                              <span>{item.user?.userName || '匿名用户'}</span>
+                              <span className="post-time">{formatTime(item.createTime)}</span>
+                            </div>
+                            <div className="post-tags">
+                              {item.tagList && item.tagList.map((tag, index) => {
+                                const tagObj = tags.find(t => t.tagsName === tag);
+                                const color = tagObj ? getTagColor(tagObj) : 'blue';
+                                if (isMobile && index > 1) return null;
+                                return (
+                                  <Tag
+                                    key={index}
+                                    color={color}
+                                    className="category-tag-small"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {renderTagIcon(tagObj)}
+                                    {tag}
+                                  </Tag>
+                                );
+                              })}
+                              {isMobile && item.tagList && item.tagList.length > 2 && (
+                                <Tag className="category-tag-small">
+                                  +{item.tagList.length - 2}
+                                </Tag>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="post-content-wrapper">
+                          <div className="post-title">
+                            {item.title}
+                          </div>
+
+                          {item.thumbComment && (
+                            <div className="post-content hot-comment">
+                              {item.thumbComment.content
+                                ? (item.thumbComment.content.match(/\[img\](.*?)\[\/img\]/i)
+                                  ? '【图片】'
+                                  : (item.thumbComment.content.length > 50
+                                    ? `${item.thumbComment.content.substring(0, 50)}...`
+                                    : item.thumbComment.content))
+                                : ''}
                             </div>
                           )}
-                          <div className="author-name">
-                            <span>{item.user?.userName || '匿名用户'}</span>
-                            <span className="post-time">{formatTime(item.createTime)}</span>
-                          </div>
-                          <div className="post-tags">
-                            {item.tagList && item.tagList.map((tag, index) => {
-                              const tagObj = tags.find(t => t.tagsName === tag);
-                              const color = tagObj ? getTagColor(tagObj) : 'blue';
-                              if (isMobile && index > 1) return null;
-                              return (
-                                <Tag
-                                  key={index}
-                                  color={color}
-                                  className="category-tag-small"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {renderTagIcon(tagObj)}
-                                  {tag}
-                                </Tag>
-                              );
-                            })}
-                            {isMobile && item.tagList && item.tagList.length > 2 && (
-                              <Tag className="category-tag-small">
-                                +{item.tagList.length - 2}
-                              </Tag>
-                            )}
-                          </div>
                         </div>
-                      </div>
-
-                      <div className="post-content-wrapper">
-                        <div className="post-title">
-                          {item.title}
-                        </div>
-
-                        {item.thumbComment && (
-                          <div className="post-content hot-comment">
-                            {item.thumbComment.content
-                              ? (item.thumbComment.content.match(/\[img\](.*?)\[\/img\]/i)
-                                ? '【图片】'
-                                : (item.thumbComment.content.length > 50
-                                  ? `${item.thumbComment.content.substring(0, 50)}...`
-                                  : item.thumbComment.content))
-                              : ''}
-                          </div>
-                        )}
-                      </div>
-                    </List.Item>
-                  )}
-                />
-              </InfiniteScroll>
-            )}
-          </Card>
-        </div>
-
-        <div className="post-sidebar">
-          <Card title="热门话题" className="hot-topics-card">
-            <List
-              size="small"
-              dataSource={hotTopics}
-              renderItem={(item, index) => (
-                <List.Item className="hot-topic-item">
-                  <Badge
-                    count={index + 1}
-                    style={{
-                      backgroundColor: index < 3 ? '#ff4d4f' : '#999',
-                      marginRight: '8px',
-                      minWidth: '28px',
-                      height: '28px',
-                      lineHeight: '28px',
-                      borderRadius: '50%',
-                    }}
+                      </List.Item>
+                    )}
                   />
-                  <Link to={item.url || '#'}>{item.title}</Link>
-                  <span className="topic-count">{item.followerCount || 0}人点赞</span>
-                </List.Item>
+                </InfiniteScroll>
               )}
-            />
-          </Card>
+            </Card>
+          </div>
+        </Col>
 
-          <Card title="社区公告" className="announcement-card">
-            <p>🎉 欢迎来到摸鱼论坛！</p>
-            <p>🚀 新功能上线：表情包发送功能已开放</p>
-            <p>📢 社区规则已更新，请遵守社区规范</p>
-          </Card>
-        </div>
-      </div>
+        {/* 侧边栏 */}
+        <Col xs={24} md={8} lg={6}>
+          <div className="post-sidebar">
+            <Card title="热门话题" className="hot-topics-card">
+              <List
+                size="small"
+                dataSource={hotTopics}
+                renderItem={(item, index) => (
+                  <List.Item className="hot-topic-item">
+                    <Badge
+                      count={index + 1}
+                      style={{
+                        backgroundColor: index < 3 ? '#ff4d4f' : '#999',
+                        marginRight: '8px',
+                        minWidth: '28px',
+                        height: '28px',
+                        lineHeight: '28px',
+                        borderRadius: '50%',
+                      }}
+                    />
+                    <Link to={item.url || '#'}>{item.title}</Link>
+                    <span className="topic-count">{item.followerCount || 0}人点赞</span>
+                  </List.Item>
+                )}
+              />
+            </Card>
+
+            <Card title="社区公告" className="announcement-card">
+              <p>🎉 欢迎来到摸鱼论坛！</p>
+              <p>🚀 新功能上线：表情包发送功能已开放</p>
+              <p>📢 社区规则已更新，请遵守社区规范</p>
+            </Card>
+          </div>
+        </Col>
+      </Row>
     </div>
   );
 };

@@ -1,3 +1,25 @@
+// 可滚动内容区域的混合宏
+.scrollableTabContent() {
+  max-height: 320px; // 设置一个最大高度
+  overflow-y: auto; // 内容超出时显示垂直滚动条
+  padding: 20px; // 统一内边距
+
+  // 美化滚动条样式 (仅在 webkit 内核浏览器生效)
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #e0e0e0;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #c0c0c0;
+  }
+}
+
 // 共享的皮肤卡片样式
 .skinCardStyles() {
   margin-bottom: 12px;
@@ -465,7 +487,7 @@
 }
 
 .shopContainer {
-  padding: 20px 0;
+  .scrollableTabContent();
 
   .shopSection {
     margin-bottom: 30px;
@@ -491,7 +513,7 @@
 }
 
 .skinContainer {
-  padding: 10px 0;
+  .scrollableTabContent();
 
   .skinsList {
     margin-top: 10px;

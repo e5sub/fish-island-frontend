@@ -1,4 +1,5 @@
 import zhData from '@emoji-mart/data/i18n/zh.json';
+import AnnouncementModal from '@/components/AnnouncementModal';
 import EmoticonPicker from '@/components/EmoticonPicker';
 import MessageContent from '@/components/MessageContent';
 import RoomInfoCard from '@/components/RoomInfoCard';
@@ -153,6 +154,7 @@ const ChatRoom: React.FC = () => {
     '欢迎来到摸鱼聊天室！🎉 这里是一个充满快乐的地方~。致谢：感谢 yovvis 大佬赞助的服务器资源🌟，域名9月份过期，请移步新域名：<a href="https://yucoder.cn/" target="_blank" rel="noopener noreferrer">https://yucoder.cn/</a>',
   );
   const [showAnnouncement, setShowAnnouncement] = useState<boolean>(true);
+  const [isAnnouncementModalVisible, setIsAnnouncementModalVisible] = useState(false);
 
   const [isComponentMounted, setIsComponentMounted] = useState(true);
 
@@ -2580,6 +2582,11 @@ const ChatRoom: React.FC = () => {
         otherUserName={onlineUsers.find(user => user.id === currentPetUserId)?.name}
       />
 
+      <AnnouncementModal
+        open={isAnnouncementModalVisible}
+        onCancel={() => setIsAnnouncementModalVisible(false)}
+      />
+
       {/* 房间信息卡片 */}
       <RoomInfoCard
         visible={isRoomInfoVisible}
@@ -2619,6 +2626,13 @@ const ChatRoom: React.FC = () => {
             <div className={styles.announcementContent}>
               <SoundOutlined className={styles.announcementIcon} />
               <span dangerouslySetInnerHTML={{ __html: announcement }} />
+              <Button
+                type="link"
+                onClick={() => setIsAnnouncementModalVisible(true)}
+                style={{ marginLeft: '16px', padding: '0' }}
+              >
+                查看更新
+              </Button>
             </div>
           }
           type="info"

@@ -63,6 +63,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseHeroRankingVO_ = {
+    code?: number;
+    data?: HeroRankingVO;
+    message?: string;
+  };
+
   type BaseResponseHeroVO_ = {
     code?: number;
     data?: HeroVO;

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Avatar, Button, message, Spin, Tabs, Modal } from 'antd';
-import { ShopOutlined, CrownOutlined, GiftOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Avatar, Button, message, Spin, Tabs, Modal, Card, List, Typography, Tag } from 'antd';
+import { ShopOutlined, CrownOutlined, GiftOutlined, ExclamationCircleOutlined, CreditCardOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { getLoginUserUsingGet } from '@/services/backend/userController';
 import { listAvatarFrameVoByPageUsingPost, exchangeFrameUsingPost, setCurrentFrameUsingPost } from '@/services/backend/avatarFrameController';
 import { listPropsPageUsingGet, purchasePropsUsingPost } from '@/services/backend/propsController';
 import styles from './index.module.less';
+import './index.less';
 import { useModel } from '@umijs/max';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import {history} from "@@/core/history";
 
 const { confirm } = Modal;
 
@@ -368,6 +370,74 @@ const AvatarFrames: React.FC = () => {
     </InfiniteScroll>
   );
 
+  const renderMonthlyCard = () => {
+    const features = [
+      {
+        title: '永久会员资格',
+        description: '一次支持，即可获得网站永久会员身份。',
+        tag: '永久有效',
+      },
+      {
+        title: '每日积分奖励',
+        description: '成为会员后，每日登录可额外获得 10 点可用积分。',
+        tag: '+10 积分/天',
+      },
+      {
+        title: '每日免费红包',
+        description: '会员每天发送的第一个红包将不消耗任何积分。',
+        tag: '每日一次',
+      },
+      {
+        title: '双倍红包机会',
+        description: '会员每日可发送两次红包，而普通用户只能发送一次。',
+        tag: '特权',
+      },
+      {
+        title: '解锁高级功能',
+        description: '无需达到 2100 积分，会员可直接解锁发红包等高级功能。',
+        tag: '立即解锁',
+      },
+    ];
+
+    return (
+      <div className="monthlyCardContainer">
+        <Card
+          className="monthlyCard"
+          title={
+            <>
+              <div>摸鱼月卡</div>
+              <div className="cardSubtitle">支持网站，享受更多特权</div>
+            </>
+          }
+        >
+          <List
+            className="privilegeList"
+            itemLayout="horizontal"
+            dataSource={features}
+            renderItem={(item) => (
+              <List.Item>
+                <List.Item.Meta
+                  avatar={<CheckCircleOutlined className="privilegeIcon" />}
+                  title={
+                    <>
+                      {item.title} <Tag className="priceTag">{item.tag}</Tag>
+                    </>
+                  }
+                  description={item.description}
+                />
+              </List.Item>
+            )}
+          />
+          <div className="supportButtonContainer">
+            <Button type="primary" size="large" onClick={() => history.push('/rank/reward')}>
+              前往支持
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  };
+
   const tabItems = [
     {
       key: 'frames',
@@ -389,6 +459,16 @@ const AvatarFrames: React.FC = () => {
       ),
       children: renderOtherItems(),
     },
+    {
+      key: 'monthlyCard',
+      label: (
+        <span>
+          <CreditCardOutlined />
+          相关物品介绍
+        </span>
+      ),
+      children: renderMonthlyCard(),
+    },
   ];
 
   // 处理标签页切换
@@ -408,6 +488,8 @@ const AvatarFrames: React.FC = () => {
       setProps([]);
       setHasMoreProps(true);
       fetchProps(1);
+    } else if (key === 'monthlyCard') {
+      // 切换到月卡标签，不需要加载数据
     }
   };
 
