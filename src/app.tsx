@@ -220,6 +220,15 @@ export const layout: RunTimeLayoutConfig = ({initialState}) => {
     listenRouteChange();
     registerServiceWorker();
 
+    // 添加百度统计代码
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?3f2490c2a69874f9cb3c05f22a48e6b9";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+
     // 使用标志位防止死循环的MutationObserver
     let isSettingTitle = false;
 

@@ -38,6 +38,9 @@ import {
   CalendarOutlined,
   TeamOutlined,
   EllipsisOutlined,
+  ThunderboltOutlined,
+  FileImageOutlined,
+  RocketOutlined,
 } from '@ant-design/icons';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
@@ -56,6 +59,7 @@ import {
   Spin,
   Tabs,
   Badge,
+  Switch,
 } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
@@ -140,6 +144,7 @@ const ChatRoom: React.FC = () => {
   const [isNearBottom, setIsNearBottom] = useState(true);
   const isManuallyClosedRef = useRef(false);
   const isAutoScrollingRef = useRef(false); // 添加自动滚动标记
+  const [expandedImages, setExpandedImages] = useState<Set<string>>(new Set()); // 添加展开图片的状态
 
   // 分页相关状态
   const [current, setCurrent] = useState<number>(1);
@@ -220,6 +225,8 @@ const ChatRoom: React.FC = () => {
 
   const [isRoomInfoVisible, setIsRoomInfoVisible] = useState<boolean>(false);
   const [undercoverNotification, setUndercoverNotification] = useState<string>(UNDERCOVER_NOTIFICATION.NONE);
+
+  const [isSpeedMode, setIsSpeedMode] = useState<boolean>(false);
 
   // 添加搜索音乐的函数
   const handleMusicSearch = async () => {
@@ -476,13 +483,15 @@ const ChatRoom: React.FC = () => {
         onClick={() => handleSelectMention(user)}
         style={{ ...style, cursor: 'pointer' }}
       >
-        <div className={styles.avatarWrapper}>
-          <Popover content={<UserInfoCard user={user} />} trigger="hover" placement="right">
-            <div className={styles.avatarWithFrame}>
-              <Avatar src={user.avatar} size={28} />
-            </div>
-          </Popover>
-        </div>
+        {!isSpeedMode && (
+          <div className={styles.avatarWrapper}>
+            <Popover content={<UserInfoCard user={user} />} trigger="hover" placement="right">
+              <div className={styles.avatarWithFrame}>
+                <Avatar src={user.avatar} size={28} />
+              </div>
+            </Popover>
+          </div>
+        )}
         <div className={styles.userInfo}>
           <div className={styles.userName}>{user.name}</div>
           <div className={styles.userStatus}>{user.status}</div>
@@ -2036,24 +2045,46 @@ const ChatRoom: React.FC = () => {
     // const imgMatch = content.match(/\[img\](.*?)\[\/img\]/);
     const imgMatch = /\[img\]([^\[\]]*)\[\/img\]/i.exec(content);
     if (imgMatch) {
-      return (
-        <MessageContent
-          content={content}
-          onImageLoad={() => {
-            // 图片加载完成后,如果是最新消息则滚动到底部
-            const lastMessage = messages[messages.length - 1];
-            const isLatestMessage = lastMessage?.content === content;
-            if (
-              isLatestMessage &&
-              (isNearBottom || lastMessage?.sender.id === String(currentUser?.id)) &&
-              !isAutoScrollingRef.current // 避免重复滚动
-            ) {
-              // 添加短暂延迟，确保图片已完全渲染
-              setTimeout(scrollToBottom, 200);
-            }
-          }}
-        />
-      );
+      // 处理图片，根据极速模式决定是否默认渲染
+      const [_, imageUrl] = imgMatch;
+      
+      const handleImageClick = () => {
+        setExpandedImages(prev => {
+          const newSet = new Set(prev);
+          newSet.add(imageUrl);
+          return newSet;
+        });
+      };
+      
+      // 如果不是极速模式，或者图片已经被展开，则渲染图片
+      if (!isSpeedMode || expandedImages.has(imageUrl)) {
+        return (
+          <MessageContent
+            content={content}
+            onImageLoad={() => {
+              // 图片加载完成后,如果是最新消息则滚动到底部
+              const lastMessage = messages[messages.length - 1];
+              const isLatestMessage = lastMessage?.content === content;
+              if (
+                isLatestMessage &&
+                (isNearBottom || lastMessage?.sender.id === String(currentUser?.id)) &&
+                !isAutoScrollingRef.current // 避免重复滚动
+              ) {
+                // 添加短暂延迟，确保图片已完全渲染
+                setTimeout(scrollToBottom, 200);
+              }
+            }}
+          />
+        );
+      } else {
+        // 极速模式下且图片未展开，显示按钮
+        return (
+          <div className={styles.imageButton} onClick={handleImageClick}>
+            <FileImageOutlined className={styles.imageIcon} />
+            <span>点击展开图片</span>
+          </div>
+        );
+      }
     }
     return <MessageContent content={content} />;
   };
@@ -2509,6 +2540,9 @@ const ChatRoom: React.FC = () => {
       case 'pet':
         setIsPetModalVisible(true);
         break;
+      case 'speedMode':
+        toggleSpeedMode(!isSpeedMode);
+        break;
       default:
         break;
     }
@@ -2563,13 +2597,35 @@ const ChatRoom: React.FC = () => {
     };
   }, []);
 
+  // 切换极速模式
+  const toggleSpeedMode = (checked: boolean) => {
+    setIsSpeedMode(checked);
+    // 保存到本地存储，以便刷新页面后保持设置
+    localStorage.setItem('chat_speed_mode', checked.toString());
+    
+    // 如果关闭极速模式，清空已展开图片的状态
+    if (!checked) {
+      setExpandedImages(new Set());
+    }
+    
+    messageApi.success(`已${checked ? '开启' : '关闭'}极速模式`);
+  };
+
+  // 从本地存储加载极速模式设置
+  useEffect(() => {
+    const savedSpeedMode = localStorage.getItem('chat_speed_mode');
+    if (savedSpeedMode) {
+      setIsSpeedMode(savedSpeedMode === 'true');
+    }
+  }, []);
+
   return (
-    <div className={styles.chatRoom}>
-      {/* 可拖动宠物组件 */}
-      <MiniPet onClick={() => {
-        setCurrentPetUserId(null);
-        setIsPetModalVisible(true);
-      }} />
+    <div className={`${styles.chatRoom} ${isSpeedMode ? styles.speedMode : ''}`}>
+        {/* 可拖动宠物组件 */}
+        <MiniPet onClick={() => {
+          setCurrentPetUserId(null);
+          setIsPetModalVisible(true);
+        }} />
       
       {/* 摸鱼宠物组件 */}
       <MoyuPet
@@ -2931,6 +2987,19 @@ const ChatRoom: React.FC = () => {
                   <PaperClipOutlined className={styles.moreOptionsIcon} />
                   <span>上传图片</span>
                 </div>
+                <div className={styles.moreOptionsItem}>
+                  <RocketOutlined className={styles.moreOptionsIcon} />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <span style={{ marginRight: '10px' }}>极速模式</span>
+                    <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                      <Switch
+                        checked={isSpeedMode}
+                        onChange={(checked) => toggleSpeedMode(checked)}
+                        size="small"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             }
             trigger="click"
@@ -3042,7 +3111,14 @@ const ChatRoom: React.FC = () => {
                 </div>
                 <div className={styles.mobileToolText}>摸鱼宠物</div>
               </div>
-              <div className={styles.mobileTool} style={{ visibility: 'hidden' }}></div>
+              <div className={styles.mobileTool} onClick={() => handleMobileToolClick('speedMode')}>
+                <div className={styles.mobileToolIcon}>
+                  <RocketOutlined />
+                </div>
+                <div className={styles.mobileToolText}>
+                  {isSpeedMode ? '关闭极速' : '开启极速'}
+                </div>
+              </div>
               <div className={styles.mobileTool} style={{ visibility: 'hidden' }}></div>
               <div className={styles.mobileTool} style={{ visibility: 'hidden' }}></div>
             </div>

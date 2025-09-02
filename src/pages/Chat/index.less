@@ -2429,6 +2429,49 @@
   margin-right: 8px;
 }
 
+
+
+// 极速模式下隐藏头像框
+.speedMode {
+  .avatarFrame {
+    display: none !important;
+  }
+
+  // 右侧用户列表不显示头像
+  .userItem {
+    .avatarWrapper {
+      display: none;
+    }
+  }
+}
+
+// 图片按钮
+.imageButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  background: #f0f2f5;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin: 4px 0;
+  color: #666;
+  font-size: 13px;
+  
+  &:hover {
+    background: #e6f7ff;
+    border-color: #1890ff;
+    color: #1890ff;
+  }
+  
+  .imageIcon {
+    margin-right: 6px;
+    font-size: 16px;
+  }
+}
+
 // 添加移动端隐藏元素的类
 .hideOnMobile {
   @media screen and (max-width: 768px) {

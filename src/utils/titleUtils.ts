@@ -121,6 +121,14 @@ export const getTitleTagProperties = (isAdmin: boolean, level: number, titleId?:
           tagEmoji = '🌟';
           tagClass = 'titleTagGamer2';
           break;
+        case '11': // 汉堡大王
+          tagEmoji = '🍔';
+          tagClass = 'titleTagBurgerKing';
+          break;
+        case '12': // 摸鱼铲屎官
+          tagEmoji = '🦊';
+          tagClass = 'titleTagFox';
+          break;
         default:
           tagEmoji = '🎯';
           tagClass = 'levelTagBeginner';
@@ -206,4 +214,4 @@ export const getTitleTagProperties = (isAdmin: boolean, level: number, titleId?:
     tagEmoji,
     tagClass
   };
-}; 
+};

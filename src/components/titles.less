@@ -428,6 +428,75 @@
       animation: gamer2TextGlow 2s infinite alternate;
     }
   }
+
+  &.titleTagBurgerKing {
+    background: linear-gradient(135deg, #b2fab4 0%, #b7d169 50%, #81c784 100%);
+    box-shadow: 0 2px 8px rgba(129, 199, 132, 0.6);
+    animation: burgerKingPulse 2s infinite alternate;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '🍔';
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      font-size: 10px;
+      opacity: 0.7;
+      animation: burgerKingFloat 3s ease-in-out infinite;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, rgba(178, 250, 180, 0) 45%, rgba(129, 199, 132, 0.5) 50%, rgba(178, 250, 180, 0) 55%);
+      background-size: 200% 200%;
+      animation: burgerKingShine 3s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    .adminText {
+      position: relative;
+      z-index: 2;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 5px rgba(129, 199, 132, 0.7);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      animation: burgerKingTextGlow 2s infinite alternate;
+    }
+  }
+
+  &.titleTagFox {
+    background: linear-gradient(135deg, #ff9a44 0%, #ff6347 100%);
+    box-shadow: 0 2px 8px rgba(255, 154, 68, 0.6);
+    animation: foxPulse 2s infinite alternate;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '🦊';
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      font-size: 10px;
+      opacity: 0.7;
+      animation: foxFloat 3s ease-in-out infinite;
+    }
+
+    .adminText {
+      position: relative;
+      z-index: 2;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 5px rgba(255, 154, 68, 0.7);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      animation: foxTextGlow 2s infinite alternate;
+    }
+  }
 }
 
 // 管理用户信息卡片中的标签容器样式
@@ -700,4 +769,53 @@
 @keyframes gamer2TextGlow {
   0% { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 5px rgba(153, 51, 255, 0.5); }
   100% { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 10px rgba(153, 51, 255, 0.8), 0 0 15px rgba(204, 51, 255, 0.6); }
-} 
+}
+
+@keyframes burgerKingPulse {
+  0% {
+    box-shadow: 0 0 5px rgba(129, 199, 132, 0.5), 0 0 10px rgba(178, 250, 180, 0.3);
+    filter: brightness(0.9);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(129, 199, 132, 0.8), 0 0 20px rgba(178, 250, 180, 0.6);
+    filter: brightness(1.2);
+  }
+}
+
+@keyframes burgerKingFloat {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
+  50% { transform: translate(-3px, -3px) rotate(20deg); opacity: 1; }
+  100% { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
+}
+
+@keyframes burgerKingShine {
+  0% { background-position: 200% 50%; }
+  100% { background-position: -100% 50%; }
+}
+
+@keyframes burgerKingTextGlow {
+  0% { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 5px rgba(129, 199, 132, 0.5); }
+  100% { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 10px rgba(129, 199, 132, 0.8), 0 0 15px rgba(178, 250, 180, 0.6); }
+}
+
+@keyframes foxPulse {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 154, 68, 0.5), 0 0 10px rgba(255, 99, 71, 0.3);
+    filter: brightness(0.9);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(255, 154, 68, 0.8), 0 0 20px rgba(255, 99, 71, 0.6);
+    filter: brightness(1.2);
+  }
+}
+
+@keyframes foxFloat {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
+  50% { transform: translate(-3px, -3px) rotate(20deg); opacity: 1; }
+  100% { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
+}
+
+@keyframes foxTextGlow {
+  0% { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 5px rgba(255, 154, 68, 0.5); }
+  100% { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 154, 68, 0.8), 0 0 15px rgba(255, 99, 71, 0.6); }
+}

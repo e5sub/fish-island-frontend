@@ -617,7 +617,16 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
 
   // 添加安全的 HTML 渲染函数
   const sanitizeHtml = (html: string) => {
-    return DOMPurify.sanitize(html, {
+    // 添加钩子，移除标题标签的 class 属性
+    DOMPurify.addHook('afterSanitizeAttributes', function (node) {
+      // 检查节点是否为标题标签
+      if (node.tagName && ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(node.tagName)) {
+        // 移除 class 属性
+        node.removeAttribute('class');
+      }
+    });
+
+    const sanitized = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: [
         'p',
         'br',
@@ -785,6 +794,11 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, onImageLoad })
         'ondrop',
       ],
     });
+
+    // 及时移除钩子，避免影响其他地方的 DOMPurify 使用
+    DOMPurify.removeHook('afterSanitizeAttributes');
+
+    return sanitized;
   };
 
   // 修改检测 iframe 语法的函数
