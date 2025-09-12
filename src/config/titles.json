@@ -69,6 +69,28 @@
       "id": "12",
       "name": "摸鱼铲屎官",
       "description": "宠物排行榜前十名称号"
+    },
+    {
+      "id": "13",
+      "name": "查无此人",
+      "description": "没有名字的专属定制称号",
+      "titleImg": "https://api.oss.cqbo.com/moyu/title/Yg2oqPCa-badge-查无此人.png"
+
+    },
+    {
+      "id": "14",
+      "name": "喂鱼大师",
+      "description": "喂鱼大师的专属定制称号",
+      "titleImg": "https://api.oss.cqbo.com/moyu/title/wZdzS3TT-badge-喂鱼大师.png"
+
+    }
+  ,
+    {
+      "id": "15",
+      "name": "恐龙专属称号",
+      "description": "空白专属称号",
+      "titleImg": "https://api.oss.cqbo.com/moyu/title/恐龙.png"
+
     }
   ]
 }

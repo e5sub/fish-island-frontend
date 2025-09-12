@@ -2028,6 +2028,7 @@ declare namespace API {
     isDelete?: number;
     name?: string;
     titleId?: number;
+    titleImg?: string;
     updateTime?: string;
   };
 

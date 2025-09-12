@@ -579,7 +579,7 @@ const PostPage: React.FC = () => {
                       <List.Item
                         key={item.id}
                         className="post-item"
-                        onClick={() => history.push(`/post/${String(item.id)}`)}
+                        onClick={() => window.open(`/post/${String(item.id)}`, '_blank')}
                         style={{cursor: 'pointer'}}
                         actions={[
                           // 在移动端不显示阅读量、点赞数和评论数
@@ -599,7 +599,7 @@ const PostPage: React.FC = () => {
                           <span
                             onClick={(e) => {
                               e.stopPropagation();
-                              history.push(`/post/${String(item.id)}`);
+                              window.open(`/post/${String(item.id)}`, '_blank');
                             }}
                             className="comment-link"
                           >

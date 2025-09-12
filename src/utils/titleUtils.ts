@@ -4,6 +4,7 @@ interface Title {
   id: number;
   name: string;
   description: string;
+  titleImg?: string;
 }
 
 /**
@@ -62,9 +63,9 @@ export const generateUniqueShortId = (userId: string): string => {
  * @param isAdmin Whether the user is an admin
  * @param level User level
  * @param titleId Optional title ID
- * @returns Object containing tag text, emoji and CSS class
+ * @returns Object containing tag text, emoji, CSS class and title image URL if available
  */
-export const getTitleTagProperties = (isAdmin: boolean, level: number, titleId?: number): { tagText: string, tagEmoji: string, tagClass: string } => {
+export const getTitleTagProperties = (isAdmin: boolean, level: number, titleId?: number): { tagText: string, tagEmoji: string, tagClass: string, titleImg?: string } => {
   // 如果有特定的称号ID且不是0（0表示使用等级称号）
   if (titleId !== undefined && titleId != 0) {
     // 从 titles.json 中获取对应的称号
@@ -137,7 +138,8 @@ export const getTitleTagProperties = (isAdmin: boolean, level: number, titleId?:
       return {
         tagText: title.name,
         tagEmoji,
-        tagClass
+        tagClass,
+        titleImg: title.titleImg
       };
     }
   }
