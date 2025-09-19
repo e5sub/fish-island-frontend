@@ -166,6 +166,9 @@ const GlobalReader: React.FC<ReaderProps> = ({ visible, onClose }): React.ReactN
   const [currentThemeId, setCurrentThemeId] = useState<string>(DEFAULT_SETTINGS.themeId || 'default');
   const [showThemes, setShowThemes] = useState(false); // 用于控制主题设置的显示
   
+  // 添加摸鱼模式状态
+  const [isMoyuMode, setIsMoyuMode] = useState(false);
+  
   // 添加自定义主题相关状态
   const [userThemes, setUserThemes] = useState<Theme[]>([]); // 用户自定义主题列表
   const [showThemeCreator, setShowThemeCreator] = useState(false); // 控制主题创建器的显示
@@ -577,6 +580,133 @@ const forceUpdateReadingProgress = () => {
   }
 };
 
+// 重构切换章节函数
+const changeChapter = useCallback(async (newIndex: number): Promise<boolean> => {
+  console.log(`[changeChapter] 切换到章节索引: ${newIndex}`);
+
+  // 使用ref获取最新的book值，避免依赖引起的无限循环
+  const currentBook = bookRef.current;
+
+  if (!currentBook || !currentBook.chapters) {
+    console.error('[changeChapter] book或chapters为空');
+    message.error('书籍数据不完整');
+    return false;
+  }
+
+  // 设置加载状态
+  setChapterLoadingState({
+    isLoading: true,
+    index: newIndex
+  });
+
+  try {
+    // 在切换章节前保存当前进度
+    forceUpdateReadingProgress();
+
+    // 索引边界检查
+    if (newIndex < 0 || newIndex >= currentBook.chapters.length) {
+      console.error(`[changeChapter] 章节索引${newIndex}超出范围[0-${currentBook.chapters.length - 1}]`);
+      message.error('无效的章节索引');
+      return false;
+    }
+
+    // 设置章节索引和更新引用
+    setChapterIndex(newIndex);
+    chapterIndexRef.current = newIndex;
+
+    // 获取章节
+    const chapter = currentBook.chapters.find((c: Chapter) => c.index === newIndex);
+    if (!chapter) {
+      console.error(`[changeChapter] 找不到索引为${newIndex}的章节`);
+      message.error('找不到对应章节');
+      return false;
+    }
+
+    // 添加加载状态提示
+    message.loading({
+      content: '正在加载章节内容...',
+      key: 'chapterLoading',
+      duration: 0
+    });
+
+    // 检查是否已有内容
+    if (chapter.content) {
+      // 直接使用缓存内容
+      setChapterContent(chapter.content);
+      // 同时更新引用
+      chapterContentRef.current = chapter.content;
+
+      // 强制保存进度到localStorage，确保页内阅读器可以读取
+      try {
+        const savedBooks = localStorage.getItem('fish-reader-books');
+        if (savedBooks) {
+          const books = JSON.parse(savedBooks);
+          const bookIndex = books.findIndex((b: Book) => b.id === currentBook.id);
+
+          if (bookIndex >= 0) {
+            // 更新书籍信息
+            books[bookIndex] = {
+              ...books[bookIndex],
+              lastReadChapter: newIndex,
+              lastReadTime: Date.now()
+            };
+
+            // 保存更新后的书籍列表
+            localStorage.setItem('fish-reader-books', JSON.stringify(books));
+
+            // 保存最后阅读的书籍ID
+            localStorage.setItem('fish-reader-last-book', currentBook.id.toString());
+          }
+        }
+      } catch (error) {
+        console.error('[changeChapter] 保存进度失败:', error);
+      }
+
+      // 使用setTimeout确保章节内容加载后，强制更新一次阅读进度
+      setTimeout(() => {
+        // 异步强制更新一次进度，确保页内阅读器能够读取到最新进度
+        forceUpdateReadingProgress();
+      }, 500);
+
+      message.destroy('chapterLoading');
+      return true;
+    } else {
+      // 需要加载章节内容
+      const chapterWithContent = await loadChapterContent(currentBook, chapter);
+
+      if (chapterWithContent && chapterWithContent.content) {
+        setChapterContent(chapterWithContent.content);
+        // 同时更新引用
+        chapterContentRef.current = chapterWithContent.content;
+
+        // 异步强制更新一次进度，确保页内阅读器能够读取到最新进度
+        setTimeout(() => {
+          forceUpdateReadingProgress();
+        }, 500);
+
+        message.destroy('chapterLoading');
+        return true;
+      } else {
+        console.error(`[changeChapter] 获取的章节内容为空`);
+        setChapterContent('章节内容加载失败');
+        message.destroy('chapterLoading');
+        return false;
+      }
+    }
+  } catch (error) {
+    console.error('[changeChapter] 在异步加载章节内容时出错:', error);
+    message.destroy('chapterLoading');
+    return false;
+  } finally {
+    // 无论成功与否，总是重置加载状态
+    setChapterLoadingState({
+      isLoading: false,
+      index: null
+    });
+  }
+}, []);
+
+
 // 在组件卸载时关闭画中画窗口
 useEffect(() => {
   return () => {
@@ -589,6 +719,7 @@ useEffect(() => {
     }
   };
 }, []);
+
 
 // 同步引用和状态
 useEffect(() => {
@@ -644,140 +775,6 @@ const enhancedHandleClose = useCallback(() => {
   onClose();
 }, [onClose]);
 
-// 重构切换章节函数
-const changeChapter = useCallback(async (newIndex: number): Promise<boolean> => {
-  console.log(`[changeChapter] 切换到章节索引: ${newIndex}`);
-
-  // 使用ref获取最新的book值，避免依赖引起的无限循环
-  const currentBook = bookRef.current;
-
-  if (!currentBook || !currentBook.chapters) {
-    console.error('[changeChapter] book或chapters为空');
-    message.error('书籍数据不完整');
-    return false;
-  }
-
-  // 设置加载状态
-  setChapterLoadingState({
-    isLoading: true,
-    index: newIndex
-  });
-
-  try {
-    // 在切换章节前保存当前进度
-    forceUpdateReadingProgress();
-
-    // 索引边界检查
-    if (newIndex < 0 || newIndex >= currentBook.chapters.length) {
-      console.error(`[changeChapter] 章节索引${newIndex}超出范围[0-${currentBook.chapters.length - 1}]`);
-      message.error('无效的章节索引');
-      return false;
-    }
-
-    // 设置章节索引和更新引用
-    setChapterIndex(newIndex);
-    chapterIndexRef.current = newIndex;
-
-
-    // 获取章节
-    const chapter = currentBook.chapters.find((c: Chapter) => c.index === newIndex);
-    if (!chapter) {
-      console.error(`[changeChapter] 找不到索引为${newIndex}的章节`);
-      message.error('找不到对应章节');
-      return false;
-    }
-
-
-
-    // 添加加载状态提示
-    message.loading({
-      content: '正在加载章节内容...',
-      key: 'chapterLoading',
-      duration: 0
-    });
-
-    // 检查是否已有内容
-            if (chapter.content) {
-
-
-        // 直接使用缓存内容
-        setChapterContent(chapter.content);
-        // 同时更新引用
-        chapterContentRef.current = chapter.content;
-
-      // 强制保存进度到localStorage，确保页内阅读器可以读取
-      try {
-        const savedBooks = localStorage.getItem('fish-reader-books');
-        if (savedBooks) {
-          const books = JSON.parse(savedBooks);
-          const bookIndex = books.findIndex((b: Book) => b.id === currentBook.id);
-
-          if (bookIndex >= 0) {
-            // 更新书籍信息
-            books[bookIndex] = {
-              ...books[bookIndex],
-              lastReadChapter: newIndex,
-              lastReadTime: Date.now()
-            };
-
-            // 保存更新后的书籍列表
-            localStorage.setItem('fish-reader-books', JSON.stringify(books));
-
-            // 保存最后阅读的书籍ID
-            localStorage.setItem('fish-reader-last-book', currentBook.id.toString());
-
-
-          }
-        }
-      } catch (error) {
-        console.error('[changeChapter] 保存进度失败:', error);
-      }
-
-      // 使用setTimeout确保章节内容加载后，强制更新一次阅读进度
-      setTimeout(() => {
-        // 异步强制更新一次进度，确保页内阅读器能够读取到最新进度
-        forceUpdateReadingProgress();
-      }, 500);
-
-      message.destroy('chapterLoading');
-      return true;
-    } else {
-
-      // 需要加载章节内容
-      const chapterWithContent = await loadChapterContent(currentBook, chapter);
-
-                if (chapterWithContent && chapterWithContent.content) {
-
-          setChapterContent(chapterWithContent.content);
-          // 同时更新引用
-          chapterContentRef.current = chapterWithContent.content;
-
-        // 异步强制更新一次进度，确保页内阅读器能够读取到最新进度
-        setTimeout(() => {
-          forceUpdateReadingProgress();
-        }, 500);
-
-        message.destroy('chapterLoading');
-        return true;
-      } else {
-        console.error(`[changeChapter] 获取的章节内容为空`);
-        setChapterContent('章节内容加载失败');
-        message.destroy('chapterLoading');
-        return false;
-      }
-    }
-  } catch (error) {
-    console.error('[changeChapter] 在异步加载章节内容时出错:', error);
-    message.destroy('chapterLoading');
-    return false;
-  } finally {
-    // 无论成功与否，总是重置加载状态
-    setChapterLoadingState({
-      isLoading: false,
-      index: null
-    });
-  }
-}, []);
 
 // 加载章节列表
 const loadChapterList = async (book: Book): Promise<Book | null> => {
@@ -1048,6 +1045,13 @@ const toggleClickThrough = () => {
   setIsClickThrough(newValue);
   localStorage.setItem('fish-reader-click-through', JSON.stringify(newValue));
   message.info(newValue ? '已启用点击穿透' : '已禁用点击穿透');
+};
+
+// 切换摸鱼模式
+const toggleMoyuMode = () => {
+  const newValue = !isMoyuMode;
+  setIsMoyuMode(newValue);
+  message.info(newValue ? '已进入Word模式' : '已退出Word模式');
 };
 
 // 重新加载
@@ -2908,6 +2912,9 @@ const renderContent = () => {
       </div>
     );
   }
+
+
+  // 普通模式：显示正常内容
   // 只用 text-indent，不加全角空格
   const indentEm = settings.paragraphIndent !== undefined ? settings.paragraphIndent : 2;
   return (
@@ -2945,6 +2952,151 @@ const renderContent = () => {
 
 // 如果不可见则不渲染
 if (!visible) return null;
+
+// 摸鱼模式：显示伪装界面覆盖整个页面
+if (isMoyuMode) {
+  return createPortal(
+    <>
+      {/* 引用 word.css 样式文件 */}
+      <link rel="stylesheet" href="/word.css" />
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgb(224, 224, 224)',
+          zIndex: 9999,
+          overflow: 'auto'
+        }}
+      >
+      {/* 完全模仿 index.html 的结构和类名 */}
+      <div id="__nuxt">
+        <div id="__layout">
+          <div className="default" data-v-31a8d428="">
+            <div id="bookRead" className="book-read main read-theme-word" style={{backgroundColor:'#e6e6e6'}} data-v-0cc19a20="" data-v-31a8d428="">
+              
+              {/* Word Header - 完全按照 index.html 结构 */}
+              <div className="word-header" data-v-3fda83c4="" data-v-0cc19a20="">
+                <div className="word-header-title" data-v-3fda83c4=""></div>
+                <div className="word-header-top" data-v-3fda83c4="">
+                  <div className="word-header-top-l" data-v-3fda83c4=""></div>
+                  <div className="word-header-top-r" data-v-3fda83c4=""></div>
+                </div>
+                <div className="word-header-bottom" data-v-3fda83c4="">
+                  <div className="word-header-bottom-l" data-v-3fda83c4=""></div>
+                  <div className="word-header-bottom-m" data-v-3fda83c4=""></div>
+                  <div className="word-header-bottom-r" data-v-3fda83c4="">
+                    <div 
+                      className="exit" 
+                      data-v-3fda83c4=""
+                      onClick={() => setIsMoyuMode(false)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      退出Word模式
+                    </div>
+                  </div>
+                </div>
+                <div className="close" data-v-3fda83c4=""></div>
+              </div>
+
+              {/* Word Footer - 完全按照 index.html 结构 */}
+              <div className="word-footer" data-v-53a0721a="" data-v-0cc19a20="">
+                <div className="word-footer-l" data-v-53a0721a=""></div>
+                <div className="word-footer-m" data-v-53a0721a="" style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '30px',
+                  height: '100%'
+                }}>
+                  <div 
+                    style={{ 
+                      cursor: 'pointer',
+                      color: '#acacac',
+                      fontSize: '14px'
+                    }}
+                    onClick={() => {
+                      if (chapterIndex > 0) {
+                        changeChapter(chapterIndex - 1);
+                        // 滚动到页面顶部
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        // 滚动摸鱼模式容器到顶部
+                        setTimeout(() => {
+                          const moyuContainer = document.querySelector('[style*="position: fixed"][style*="z-index: 9999"]');
+                          if (moyuContainer) {
+                            moyuContainer.scrollTop = 0;
+                          }
+                        }, 100);
+                      }
+                    }}
+                  >
+                    <span data-v-53a0721a="">上一章</span>
+                  </div>
+                  <div 
+                    style={{ 
+                      cursor: 'pointer',
+                      color: '#acacac',
+                      fontSize: '14px'
+                    }}
+                    onClick={() => {
+                      if (book && book.chapters && chapterIndex < book.chapters.length - 1) {
+                        changeChapter(chapterIndex + 1);
+                        // 滚动到页面顶部
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        // 滚动摸鱼模式容器到顶部
+                        setTimeout(() => {
+                          const moyuContainer = document.querySelector('[style*="position: fixed"][style*="z-index: 9999"]');
+                          if (moyuContainer) {
+                            moyuContainer.scrollTop = 0;
+                          }
+                        }, 100);
+                      }
+                    }}
+                  >
+                    <span data-v-53a0721a="">下一章</span>
+                  </div>
+                </div>
+                <div className="word-footer-r" data-v-53a0721a=""></div>
+              </div>
+
+              {/* Page Content - 完全按照 index.html 结构 */}
+              <div className="page-content" style={{width:'1000px'}} data-v-0cc19a20="">
+                <div className="page-breadcrumb" data-v-0cc19a20="">
+                  <a title="QQ阅读小说网" target="_blank" href="//book.qq.com" className="page-breadcrumb-item ypc-link" data-v-0cc19a20="">
+                    首页
+                  </a>
+                  <span data-v-0cc19a20="">&gt;</span>
+                </div>
+                <div className="read-header" data-v-126daad9="" data-v-0cc19a20="">
+                  <h1 className="chapter-title" data-v-126daad9="">
+                    {book?.chapters?.[chapterIndex]?.title || `第${chapterIndex + 1}章`}
+                  </h1>
+                </div>
+                <div id="article" className="chapter-content isTxt" style={{fontSize:'16px'}} data-v-0cc19a20="">
+                  {chapterContent.split('\n').map((paragraph, index) => {
+                    if (paragraph.trim()) {
+                      const cleanText = paragraph.replace(/^[\s\u3000]+/, '');
+                      return (
+                        <p key={index}>
+                          {cleanText}
+                        </p>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </>,
+    document.body
+  );
+}
 
 // 返回渲染结果
 return createPortal(
@@ -3005,6 +3157,21 @@ return createPortal(
         <div>{book?.title || '阅读器'}</div>
 
         <div style={{ display: 'flex', gap: 8 }}>
+          <Tooltip title={isMoyuMode ? "退出Word模式" : "进入Word模式"}>
+            <Button
+              type={isMoyuMode ? "primary" : "text"}
+              size="small"
+              style={{ 
+                backgroundColor: isMoyuMode ? '#ff7875' : 'transparent',
+                borderColor: isMoyuMode ? '#ff7875' : 'transparent',
+                color: isMoyuMode ? '#fff' : 'inherit'
+              }}
+              onClick={toggleMoyuMode}
+            >
+              Word模式
+            </Button>
+          </Tooltip>
+
           <Tooltip title={showChapterList ? "关闭章节列表" : "打开章节列表"}>
             <Button
               type={showChapterList ? "primary" : "text"}
