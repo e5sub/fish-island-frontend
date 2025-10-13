@@ -38,9 +38,10 @@ import {
   CalendarOutlined,
   TeamOutlined,
   EllipsisOutlined,
-  ThunderboltOutlined,
   FileImageOutlined,
   RocketOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
 } from '@ant-design/icons';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
@@ -64,7 +65,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import styles from './index.less';
-import { UNDERCOVER_NOTIFICATION, UNDERCOVER_ROOM_STATUS } from '@/constants';
+import { UNDERCOVER_NOTIFICATION } from '@/constants';
 import eventBus from '@/utils/eventBus';
 import { joinRoomUsingPost } from '@/services/backend/drawGameController';
 import { getLevelEmoji, generateUniqueShortId, getTitleTagProperties } from '@/utils/titleUtils';
@@ -359,6 +360,12 @@ const ChatRoom: React.FC = () => {
   // 添加一个状态来记录最新消息的时间戳
   const [lastMessageTimestamp, setLastMessageTimestamp] = useState<number>(Date.now());
 
+  // 添加用户列表显示隐藏状态，从localStorage获取初始值
+  const [isUserListVisible, setIsUserListVisible] = useState<boolean>(() => {
+    const saved = localStorage.getItem('chat_userlist_visible');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
   // 添加防抖相关的状态和引用
   const [newMessageCount, setNewMessageCount] = useState<number>(0);
   const newMessageTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -382,7 +389,7 @@ const ChatRoom: React.FC = () => {
     requestAnimationFrame(() => {
       // 使用性能更好的方式计算滚动位置
       const scrollTarget = container.scrollHeight - container.clientHeight;
-      
+
       container.scrollTo({
         top: scrollTarget,
         behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
@@ -399,7 +406,7 @@ const ChatRoom: React.FC = () => {
         // 滚动完成后重置标记
         isAutoScrollingRef.current = false;
       };
-      
+
       // 使用 requestAnimationFrame 代替 setTimeout，性能更好
       setTimeout(checkScrollPosition, 100);
     });
@@ -452,7 +459,11 @@ const ChatRoom: React.FC = () => {
       const headerHeight = 40;
       const padding = 20;
       const newHeight = Math.max(containerHeight - headerHeight - padding, 200);
+      console.log('计算列表高度:', { containerHeight, headerHeight, padding, newHeight });
       setListHeight(newHeight);
+    } else {
+      console.log('userListRef.current 不存在，使用默认高度');
+      setListHeight(400); // 设置一个默认高度
     }
   }, []);
 
@@ -631,10 +642,21 @@ const ChatRoom: React.FC = () => {
       }, 100);
     }
   }, [messages]); // 监听消息数组变化
-  // 初始化时获取在线用户列表
+  // 初始化时获取在线用户列表（仅在列表可见时）
   useEffect(() => {
-    fetchOnlineUsers();
-  }, []);
+    if (isUserListVisible) {
+      fetchOnlineUsers();
+      // 延迟计算高度，确保DOM已经渲染
+      setTimeout(() => {
+        updateListHeight();
+      }, 100);
+    }
+  }, [isUserListVisible, updateListHeight]);
+
+  // 监听用户列表显示状态变化，保存到localStorage
+  useEffect(() => {
+    localStorage.setItem('chat_userlist_visible', JSON.stringify(isUserListVisible));
+  }, [isUserListVisible]);
 
   // 创建用户对象的工具函数
   const createUserFromRecord = (userRecord: any, defaultRegion: string = '未知地区'): User => {
@@ -1427,13 +1449,13 @@ const ChatRoom: React.FC = () => {
           // 获取输入框位置
           const textarea = e.target;
           const rect = textarea.getBoundingClientRect();
-          
+
           // 简化位置计算逻辑
           const itemHeight = 40; // 每个选项的高度
           const maxItems = 3; // 最多显示3条数据时紧贴显示
           const listHeight = Math.min(onlineUsers.length, maxItems) * itemHeight;
           const topOffset = -listHeight - 10; // 固定在输入框上方，加一点间距
-          
+
           setMentionListPosition({
             top: rect.top + topOffset,
             left: rect.left + 10, // 固定在左侧，稍微缩进
@@ -1485,11 +1507,11 @@ const ChatRoom: React.FC = () => {
         return currentValue.slice(0, cursorPos) + `@${user.name} ` + currentValue.slice(cursorPos);
       }
     });
-    
+
     // 立即隐藏列表，提高响应速度
     setIsMentionListVisible(false);
     setMentionSearchText('');
-    
+
     // 使用 requestAnimationFrame 延迟聚焦，提高渲染性能
     requestAnimationFrame(() => {
       inputRef.current?.focus();
@@ -1519,12 +1541,12 @@ const ChatRoom: React.FC = () => {
           if (user.titleId === 0 && index === 0) {
             return true;
           }
-          
+
           // 对于其他称号，通过titleId直接匹配
           if (index > 0 && userTitleIds[index - 1] === user.titleId) {
             return true;
           }
-          
+
           return false;
         }) || allTitles[0]
       : allTitles[0];
@@ -1661,8 +1683,8 @@ const ChatRoom: React.FC = () => {
                   if (titleImg) {
             return (
               <span className={styles.titleImageContainer}>
-                <img 
-                  src={titleImg} 
+                <img
+                  src={titleImg}
                   alt={title.name}
                   className={styles.titleImage}
                 />
@@ -1717,7 +1739,7 @@ const ChatRoom: React.FC = () => {
   const handleEmoticonSelect = (url: string) => {
     // 将图片URL作为消息内容发送
     const imageMessage = `[img]${url}[/img]`;
-    
+
     // 直接使用新的消息内容发送，而不是依赖 inputValue 的状态更新
     if (!wsService.isConnected()) {
       return;
@@ -2078,7 +2100,7 @@ const ChatRoom: React.FC = () => {
     if (imgMatch) {
       // 处理图片，根据极速模式决定是否默认渲染
       const [_, imageUrl] = imgMatch;
-      
+
       const handleImageClick = () => {
         setExpandedImages(prev => {
           const newSet = new Set(prev);
@@ -2086,7 +2108,7 @@ const ChatRoom: React.FC = () => {
           return newSet;
         });
       };
-      
+
       // 如果不是极速模式，或者图片已经被展开，则渲染图片
       if (!isSpeedMode || expandedImages.has(imageUrl)) {
         return (
@@ -2633,13 +2655,36 @@ const ChatRoom: React.FC = () => {
     setIsSpeedMode(checked);
     // 保存到本地存储，以便刷新页面后保持设置
     localStorage.setItem('chat_speed_mode', checked.toString());
-    
+
     // 如果关闭极速模式，清空已展开图片的状态
     if (!checked) {
       setExpandedImages(new Set());
     }
-    
+
     messageApi.success(`已${checked ? '开启' : '关闭'}极速模式`);
+  };
+
+  // 清空聊天记录
+  const handleClearMessages = () => {
+    Modal.confirm({
+      title: '确认清空聊天记录',
+      content: '此操作将清空当前页面显示的所有聊天记录，该操作不可撤销。确定要继续吗？',
+      okText: '确认清空',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk: () => {
+        // 清空消息列表
+        setMessages([]);
+        // 重置分页状态
+        setCurrent(1);
+        setTotal(0);
+        setHasMore(true);
+        // 清空已加载的消息ID集合
+        loadedMessageIds.clear();
+        // 显示成功提示
+        messageApi.success('聊天记录已清空');
+      },
+    });
   };
 
   // 从本地存储加载极速模式设置
@@ -2691,13 +2736,13 @@ const ChatRoom: React.FC = () => {
   };
 
   return (
-    <div className={`${styles.chatRoom} ${isSpeedMode ? styles.speedMode : ''}`}>
+    <div className={`${styles.chatRoom} ${isSpeedMode ? styles.speedMode : ''} ${!isUserListVisible ? styles.userListCollapsed : ''}`}>
         {/* 可拖动宠物组件 */}
         <MiniPet onClick={() => {
           setCurrentPetUserId(null);
           setIsPetModalVisible(true);
         }} />
-      
+
       {/* 摸鱼宠物组件 */}
       <MoyuPet
         visible={isPetModalVisible}
@@ -2883,19 +2928,48 @@ const ChatRoom: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className={styles.userList}>
-        <div className={styles.userListHeader}>在线成员 ({onlineUsers.length})</div>
-        <div className={styles.userListContent} ref={userListRef}>
-          <List
-            height={listHeight}
-            itemCount={onlineUsers.length}
-            itemSize={USER_ITEM_HEIGHT}
-            width="100%"
-          >
-            {UserItem}
-          </List>
+      {/* 用户列表隐藏时显示浮动按钮 */}
+      {!isUserListVisible && (
+        <div className={`${styles.userList} ${styles.userListHidden}`}>
+          <div className={styles.userListHeader}>
+            <Button
+              type="text"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => setIsUserListVisible(!isUserListVisible)}
+              title="显示用户列表"
+              className={styles.toggleButton}
+            />
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* 用户列表显示时的正常布局 */}
+      {isUserListVisible && (
+        <div className={styles.userList}>
+          <div className={styles.userListHeader}>
+            <span>在线成员 ({onlineUsers.length})</span>
+            <Button
+              type="text"
+              size="small"
+              icon={<EyeInvisibleOutlined />}
+              onClick={() => setIsUserListVisible(!isUserListVisible)}
+              title="隐藏用户列表"
+              className={styles.toggleButton}
+            />
+          </div>
+          <div className={styles.userListContent} ref={userListRef}>
+            <List
+              height={listHeight}
+              itemCount={onlineUsers.length}
+              itemSize={USER_ITEM_HEIGHT}
+              width="100%"
+            >
+              {UserItem}
+            </List>
+          </div>
+        </div>
+      )}
 
               <div className={styles.inputArea}>
         {quotedMessage && (
@@ -3070,6 +3144,10 @@ const ChatRoom: React.FC = () => {
                       />
                     </div>
                   </div>
+                </div>
+                <div className={styles.moreOptionsItem} onClick={handleClearMessages}>
+                  <DeleteOutlined className={styles.moreOptionsIcon} />
+                  <span>清空聊天记录</span>
                 </div>
               </div>
             }
