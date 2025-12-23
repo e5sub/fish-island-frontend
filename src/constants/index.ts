@@ -18,7 +18,7 @@ export const BACKEND_HOST_WS = 'wss://127.0.0.1:8090/ws/?token=';
 
 
 export const SYSTEM_LOGO =
-  'https://api.oss.cqbo.com/moyu/moyu.png';
+  'https://oss.cqbo.com/moyu/moyu.png';
 
 /**
  * 谁是卧底房间状态常量
