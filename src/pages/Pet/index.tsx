@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Avatar, Badge, Spin, Modal, Pagination } from 'antd';
-import { TrophyOutlined, CrownOutlined, HomeOutlined, BarChartOutlined, ThunderboltOutlined, BookOutlined } from '@ant-design/icons';
+import { TrophyOutlined, CrownOutlined, HomeOutlined, BarChartOutlined, ThunderboltOutlined, BookOutlined, GiftOutlined } from '@ant-design/icons';
 import { history, useSearchParams } from '@umijs/max';
 import MoyuPet from '@/components/MoyuPet';
+import Lottery from './Lottery';
 import styles from './index.less';
 import { getPetRankListUsingGet } from '@/services/backend/petRankController';
 import { listItemTemplatesVoByPageUsingPost } from '@/services/backend/itemTemplatesController';
@@ -145,7 +146,7 @@ const PetPage: React.FC = () => {
   // 支持通过 URL 参数设置 tab
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['pet', 'ranking', 'boss', 'gallery'].includes(tabParam)) {
+    if (tabParam && ['pet', 'ranking', 'boss', 'gallery', 'lottery'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -573,6 +574,16 @@ const PetPage: React.FC = () => {
             <div className={styles.gameTabText}>图鉴</div>
             <div className={styles.gameTabDecor}></div>
           </div>
+          <div 
+            className={`${styles.gameTab} ${activeTab === 'lottery' ? styles.gameTabActive : ''}`}
+            onClick={() => setActiveTab('lottery')}
+          >
+            <div className={styles.gameTabIcon}>
+              <GiftOutlined />
+            </div>
+            <div className={styles.gameTabText}>抽奖</div>
+            <div className={styles.gameTabDecor}></div>
+          </div>
         </div>
 
         {/* 内容区域 */}
@@ -585,6 +596,7 @@ const PetPage: React.FC = () => {
           {activeTab === 'ranking' && renderRankingContent()}
           {activeTab === 'boss' && renderBossContent()}
           {activeTab === 'gallery' && renderGalleryContent()}
+          {activeTab === 'lottery' && <Lottery />}
         </div>
       </div>
       
