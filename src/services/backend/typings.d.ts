@@ -1254,9 +1254,13 @@ declare namespace API {
     current?: number;
     /** id */
     id?: number;
+    /** 使用等级需求 */
+    levelReq?: number;
     /** 物品名称（模糊搜索） */
     name?: string;
     pageSize?: number;
+    /** 稀有度等级（1-8，数字越高越稀有） */
+    rarity?: number;
     sortField?: string;
     sortOrder?: string;
     /** 是否可叠加（0-不可叠加，1-可叠加） */
@@ -1276,6 +1280,7 @@ declare namespace API {
     icon?: string;
     id?: number;
     levelReq?: number;
+    mainAttr?: Record<string, any>;
     name?: string;
     rarity?: number;
     removePoint?: number;

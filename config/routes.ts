@@ -159,6 +159,7 @@ export default [
       {icon: 'BulbOutlined', path: '/admin/title', component: './Admin/User/Title', name: '称号管理', requireAuth: true},
       {icon: 'TagsOutlined', path: '/admin/tags', component: './Admin/Tags', name: '标签管理', requireAuth: true},
       {icon: 'BookOutlined', path: '/admin/word/library', component: './Admin/Word/Library', name: '词库管理', requireAuth: true},
+      {icon: 'ToolOutlined', path: '/admin/game/itemTemplates', component: './Admin/ItemTemplates', name: '装备管理', requireAuth: true},
     ],
   },
   {path: '/', redirect: '/index', requireAuth: true},

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Avatar, Badge, Spin, Modal } from 'antd';
-import { TrophyOutlined, CrownOutlined, HomeOutlined, BarChartOutlined, ThunderboltOutlined, BookOutlined } from '@ant-design/icons';
+import { Row, Col, Card, Table, Avatar, Badge, Spin, Modal, Pagination } from 'antd';
+import { TrophyOutlined, CrownOutlined, HomeOutlined, BarChartOutlined, ThunderboltOutlined, BookOutlined, GiftOutlined } from '@ant-design/icons';
 import { history, useSearchParams } from '@umijs/max';
 import MoyuPet from '@/components/MoyuPet';
+import Lottery from './Lottery';
 import styles from './index.less';
 import { getPetRankListUsingGet } from '@/services/backend/petRankController';
 import { listItemTemplatesVoByPageUsingPost } from '@/services/backend/itemTemplatesController';
@@ -25,6 +26,9 @@ const PetPage: React.FC = () => {
     subType?: string;
     rarity?: number;
   }>({});
+  const [galleryCurrent, setGalleryCurrent] = useState<number>(1);
+  const [galleryPageSize, setGalleryPageSize] = useState<number>(20);
+  const [galleryTotal, setGalleryTotal] = useState<number>(0);
 
   // Boss相关状态
   const [bossData, setBossData] = useState<API.BossVO[]>([]);
@@ -56,12 +60,13 @@ const PetPage: React.FC = () => {
     setGalleryLoading(true);
     try {
       const res = await listItemTemplatesVoByPageUsingPost({
-        current: 1,
-        pageSize: 50,
+        current: galleryCurrent,
+        pageSize: galleryPageSize,
         ...galleryFilter
       });
       if (res.data?.records) {
         setGalleryData(res.data.records);
+        setGalleryTotal(res.data.total || 0);
       }
     } catch (error) {
       console.error('获取图鉴数据失败:', error);
@@ -118,11 +123,19 @@ const PetPage: React.FC = () => {
     fetchRankData();
   }, []);
 
+  // 筛选器变化时重置到第一页
+  useEffect(() => {
+    if (activeTab === 'gallery') {
+      setGalleryCurrent(1);
+    }
+  }, [galleryFilter, activeTab]);
+
   useEffect(() => {
     if (activeTab === 'gallery') {
       fetchGalleryData();
     }
-  }, [activeTab, galleryFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, galleryFilter, galleryCurrent, galleryPageSize]);
 
   useEffect(() => {
     if (activeTab === 'boss') {
@@ -133,7 +146,7 @@ const PetPage: React.FC = () => {
   // 支持通过 URL 参数设置 tab
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['pet', 'ranking', 'boss', 'gallery'].includes(tabParam)) {
+    if (tabParam && ['pet', 'ranking', 'boss', 'gallery', 'lottery'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -404,6 +417,30 @@ const PetPage: React.FC = () => {
             </div>
           )}
         </Spin>
+        
+        {/* 分页组件 */}
+        {galleryTotal > 0 && (
+          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+            <Pagination
+              current={galleryCurrent}
+              pageSize={galleryPageSize}
+              total={galleryTotal}
+              showSizeChanger
+              showQuickJumper
+              showTotal={(total) => `共 ${total} 条`}
+              onChange={(page, pageSize) => {
+                setGalleryCurrent(page);
+                if (pageSize !== galleryPageSize) {
+                  setGalleryPageSize(pageSize);
+                }
+              }}
+              onShowSizeChange={(current, size) => {
+                setGalleryCurrent(1);
+                setGalleryPageSize(size);
+              }}
+            />
+          </div>
+        )}
       </div>
     );
   };
@@ -537,6 +574,16 @@ const PetPage: React.FC = () => {
             <div className={styles.gameTabText}>图鉴</div>
             <div className={styles.gameTabDecor}></div>
           </div>
+          <div 
+            className={`${styles.gameTab} ${activeTab === 'lottery' ? styles.gameTabActive : ''}`}
+            onClick={() => setActiveTab('lottery')}
+          >
+            <div className={styles.gameTabIcon}>
+              <GiftOutlined />
+            </div>
+            <div className={styles.gameTabText}>抽奖</div>
+            <div className={styles.gameTabDecor}></div>
+          </div>
         </div>
 
         {/* 内容区域 */}
@@ -549,6 +596,7 @@ const PetPage: React.FC = () => {
           {activeTab === 'ranking' && renderRankingContent()}
           {activeTab === 'boss' && renderBossContent()}
           {activeTab === 'gallery' && renderGalleryContent()}
+          {activeTab === 'lottery' && <Lottery />}
         </div>
       </div>
       
