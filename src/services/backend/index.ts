@@ -13,6 +13,7 @@ import * as emoticonFavourController from './emoticonFavourController';
 import * as eventRemindController from './eventRemindController';
 import * as fileController from './fileController';
 import * as fishPetController from './fishPetController';
+import * as fundController from './fundController';
 import * as heroController from './heroController';
 import * as hotPostController from './hotPostController';
 import * as itemInstancesController from './itemInstancesController';
@@ -49,6 +50,7 @@ export default {
   emoticonFavourController,
   eventRemindController,
   fileController,
+  fundController,
   heroController,
   hotPostController,
   itemInstancesController,

@@ -124,6 +124,13 @@ export default [
         name: 'AI周报助手',
         requireAuth: false
       },
+      {
+        icon: 'FundOutlined',
+        path: '/utils/fund-hub',
+        component: './Utils/FundHub',
+        name: '基金估值',
+        requireAuth: true
+      },
     ],
   },
   {

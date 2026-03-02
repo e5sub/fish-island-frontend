@@ -1,4 +1,13 @@
 declare namespace API {
+  type AddFundRequest = {
+    /** 持有金额 */
+    amount: number;
+    /** 基金代码 */
+    code: string;
+    /** 盈亏金额（正数为盈利，负数为亏损） */
+    profit: number;
+  };
+
   type addTitleToUserUsingPOSTParams = {
     /** titleId */
     titleId: number;
@@ -66,6 +75,12 @@ declare namespace API {
   type BaseResponseDrawRoomVO_ = {
     code?: number;
     data?: DrawRoomVO;
+    message?: string;
+  };
+
+  type BaseResponseFundListVO_ = {
+    code?: number;
+    data?: FundListVO;
     message?: string;
   };
 
@@ -686,6 +701,11 @@ declare namespace API {
     token?: string;
   };
 
+  type DeleteFundRequest = {
+    /** 基金代码 */
+    code: string;
+  };
+
   type DeleteRequest = {
     id?: string;
   };
@@ -796,6 +816,15 @@ declare namespace API {
     wordHint?: string;
   };
 
+  type EditFundRequest = {
+    /** 持有金额 */
+    amount: number;
+    /** 基金代码 */
+    code: string;
+    /** 盈亏金额（正数为盈利，负数为亏损） */
+    profit: number;
+  };
+
   type eliminatePlayerUsingPOSTParams = {
     /** roomId */
     roomId: string;
@@ -861,6 +890,46 @@ declare namespace API {
 
   type FluxString_ = {
     prefetch?: number;
+  };
+
+  type FundItemVO = {
+    /** 涨跌幅（%） */
+    changePercent?: number;
+    /** 基金代码 */
+    code?: string;
+    /** 成本价 */
+    cost?: number;
+    /** 当前价格（实时估值） */
+    currentPrice?: number;
+    /** 今日盈亏 */
+    dayProfit?: number;
+    /** 持有市值 */
+    marketValue?: number;
+    /** 基金名称 */
+    name?: string;
+    /** 昨日净值 */
+    prevPrice?: number;
+    /** 持有份额 */
+    shares?: number;
+    /** 累计盈亏 */
+    totalProfit?: number;
+    /** 更新时间 */
+    updateTime?: string;
+  };
+
+  type FundListVO = {
+    /** 基金列表 */
+    fundList?: FundItemVO[];
+    /** 今日下跌的基金数量 */
+    todayDownCount?: number;
+    /** 今日上涨的基金数量 */
+    todayUpCount?: number;
+    /** 今日总盈亏 */
+    totalDayProfit?: number;
+    /** 总市值 */
+    totalMarketValue?: number;
+    /** 累计总盈亏 */
+    totalProfit?: number;
   };
 
   type generatePresignedDownloadUrlUsingGETParams = {
@@ -1196,7 +1265,7 @@ declare namespace API {
     /** 使用等级需求 */
     levelReq?: number;
     /** 非常规属性/词缀(JSON)，格式: [{k,v},...] */
-    mainAttr?: string;
+    mainAttr?: Record<string, any>;
     /** 物品名称 */
     name?: string;
     /** 稀有度等级（1-8，数字越高越稀有） */
@@ -1233,7 +1302,7 @@ declare namespace API {
     /** 使用等级需求 */
     levelReq?: number;
     /** 非常规属性/词缀(JSON) */
-    mainAttr?: string;
+    mainAttr?: Record<string, any>;
     /** 物品名称 */
     name: string;
     /** 稀有度等级（1-8） */
@@ -2310,6 +2379,19 @@ declare namespace API {
 
   type unmuteUserUsingPOSTParams = {
     /** userId */
+    userId: number;
+  };
+
+  type UpdateFundRequest = {
+    /** 基金代码 */
+    code: string;
+    /** 成本净值 */
+    cost?: number;
+    /** 基金名称 */
+    name?: string;
+    /** 持有份额 */
+    shares?: number;
+    /** 用户ID */
     userId: number;
   };
 
